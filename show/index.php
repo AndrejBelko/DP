@@ -97,6 +97,7 @@ unset($db);
         $DBinfo = $value;
         $queryDB = $value['dbname'];
     }
+    var_dump($DBinfo);
 
     ?>
 
@@ -926,16 +927,6 @@ unset($db);
         if (interpolated.length<2){
             return;
         }
-        //if (all_trajectories){
-        //    $.getJSON( "coverage/<?php //echo $DBinfo['dbname']?>//.geojson", function( data ) {
-        //        const coordinates = data.features[0].geometry.coordinates[0];
-        //        coordinates.forEach(function(point) {
-        //            var hash = encodeGeoHash(point[0],point[1],7);
-        //            interpolated.push(hash);
-        //        });
-        //    });
-        //}
-        //console.log(interpolated)
 
         $.ajax({
             method: "POST",
@@ -1206,24 +1197,24 @@ unset($db);
     }
 
     function showTrack1(id){
-        if (geoAllResult!=null){
-            map.removeLayer(geoAllResult);
-        }
-        if (geoResult!=null){
-            map.removeLayer(geoResult);
-        }
-        if (gdataPrintResult!=null){
-            map.removeLayer(gdataPrintResult);
-        }
-        if (gdataPrintResultPerPoint!=null){
-            map.removeLayer(gdataPrintResultPerPoint);
-        }
-        geoResult = L.geoJSON(JSON.parse(gdata[id][1]), {
-            style: function (feature) {
-                return {fill: false, fillOpacity: 0.6, stroke: true};
-            }
-        });
-        geoResult.addTo(map);
+        // if (geoAllResult!=null){
+        //     map.removeLayer(geoAllResult);
+        // }
+        // if (geoResult!=null){
+        //     map.removeLayer(geoResult);
+        // }
+        // if (gdataPrintResult!=null){
+        //     map.removeLayer(gdataPrintResult);
+        // }
+        // if (gdataPrintResultPerPoint!=null){
+        //     map.removeLayer(gdataPrintResultPerPoint);
+        // }
+        // geoResult = L.geoJSON(JSON.parse(gdata[id][1]), {
+        //     style: function (feature) {
+        //         return {fill: false, fillOpacity: 0.6, stroke: true};
+        //     }
+        // });
+        // geoResult.addTo(map);
     }
 
     showAllPaths();
