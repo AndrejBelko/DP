@@ -1,0 +1,144 @@
+html, body {
+    height: 100% !important;
+    padding-bottom: 0;
+    font-family: "Roboto", sans-serif !important;
+}
+
+.bd-placeholder-img {
+    font-size: 1.125rem;
+    text-anchor: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+@media (min-width: 768px) {
+    .bd-placeholder-img-lg {
+        font-size: 3.5rem;
+    }
+}
+
+.my-menu-item {
+    padding: 12px 14px;
+    text-decoration: none;
+    transition: all 0.3s ease 0s;
+    transform: scale(1);
+}
+
+.my-menu-item:hover {
+    background-color: #aaaaaa;
+    border-radius: 50px;
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+.my-menu-item-active {
+    background-color: #111;
+    border-radius: 50px;
+}
+
+a{
+    text-decoration: none;
+}
+
+.my-img {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+    -webkit-filter: blur(0);
+    filter: blur(0);
+
+    -webkit-transition: .3s ease-in-out;
+    transition: .3s ease-in-out;
+}
+.my-img:hover {
+    -webkit-transform: scale(1.2);
+    transform: scale(1.2);
+    cursor: pointer;
+    -webkit-filter: blur(3px);
+    filter: blur(3px);
+}
+
+figure {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    overflow: hidden;
+}
+
+.bi {
+    vertical-align: -.125em;
+    fill: currentColor;
+}
+
+.bi:hover {
+    cursor: pointer;
+}
+
+.pc-height{
+    max-height: 520px;
+}
+
+tr:hover{
+    cursor: pointer;
+}
+
+#backdrop, #backdrop2 {
+    display: none;
+    position: absolute;
+    min-height: 100%;
+    width: 100vw;
+    top: 0;
+    left: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+#modal, #modal2{
+    background: rgba(36, 37, 42, 0.7);
+}
+
+h1, h2, h3, h4, h5, h6, a {
+    font-family: "Roboto", serif;
+}
+
+.tooltip-inner {
+    min-width: 320px;
+    min-height: 50px;
+    display: flex;
+    margin: auto;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    font-family: "Roboto", serif;
+    font-weight: bold;
+    background-color: #0d6efd;
+}
+
+.bs-tooltip-top .tooltip-arrow::before {
+    top: -1px;
+    border-width: 0.4rem 0.4rem 0;
+    border-top-color: #0d6efd;
+}
+
+.bs-tooltip-bottom .tooltip-arrow::before {
+    bottom: -1px;
+    border-width: 0 0.4rem 0.4rem;
+    border-bottom-color: #0d6efd;
+}
+
+.bs-tooltip-start .tooltip-arrow::before {
+    left: -1px;
+    border-width: 0.4rem 0 0.4rem 0.4rem;
+    border-left-color: #0d6efd;
+}
+
+.cursor_pointer:hover {
+    cursor: pointer;
+}
+
+#sidebar {
+    max-width: 300px;
+    min-width: 200px;
+    min-height: calc(100% - 56px);
+}
