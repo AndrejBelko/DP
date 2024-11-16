@@ -194,47 +194,181 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </nav>
 </header>
 
-<h1>Upload GPX File</h1>
-<form action="upload.php" method="POST" enctype="multipart/form-data">
-    <input id="fileInput" type="file" name="gpxfile" accept=".gpx">
-    <br><br>
-    <input type="checkbox" name="type"> Chôdza
-    <br><br>
-    <span class="label-span">
-            <div class="help-marker">
-                <div class="help-window">
-                    <p>Set the number to indicate the accuracy in meters.</p>
-                </div>
-            </div> GPS accuracy: <label for="gps_accuracy">5</label>m
-        </span>
-    <input type="range" id="gps_accuracy" name="gps_accuracy" min="1" max="20" value="5">
+<div class="container-fluid">
 
-    <span class="label-span">
-            <div class="help-marker">
-                <div class="help-window">
-                    <p>Specify the search radius (in meters) within which to search road
-                        candidates for each measurement. Note that performance
-                        may decrease with a higher search radius value.</p>
-                </div>
-            </div> Search radius: <label for="search_radius">50</label>m
-        </span>
-    <input type="range" id="search_radius" name="search_radius" min="1" max="100" value="50">
+    <div class="row">
+        <div class="col-12 col-lg-8">
+            <script>
+                function showid() {
+                    document.getElementById("id-hidden").style.display = "none";
+                    document.getElementById("id-visible").style.display = "inline";
+                }
 
-    <span class="label-span">
-            <div class="help-marker">
-                <div class="help-window">
-                    <p>Penalize turns from one road segment to next. For a pedestrian
-                        map-match, you may see a back-and-forth motion along the streets of your path. Try increasing
-                        the turn penalty factor to 500 to smooth out jittering of points. Note that if GPS accuracy is
-                        already good, increasing this will have a negative affect on your results.</p>
+                function hideid() {
+                    document.getElementById("id-hidden").style.display = "inline";
+                    document.getElementById("id-visible").style.display = "none";
+                }
+            </script>
+
+            <div id="selectedid" ></div>
+            <div id="speedchart" class="chartdiv"></div>
+            <div id="heightchart" class="chartdiv"></div>
+
+
+        </div>
+        <div id="datacol" class="col-12 col-lg-4">
+
+            <?php if ($message != ''): ?>
+                <div class="alert alert-info">
+                    <?php echo $message; ?>
                 </div>
+            <?php endif; ?>
+            <?php if ($message2 != ''): ?>
+                <div class="alert alert-info">
+                    <?php echo $message2; ?>
+                </div>
+            <?php endif; ?>
+
+            <p class="mt-4"><a href="#" onclick="showElement('upload-hodinky')"><strong>Nahraj udaje z hodiniek</strong></a>
+            </p>
+            <div style="display: none" id="upload-hodinky">
+                <form action="index.php" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>Zadaj Rok-Mesiac</label>
+                        <input style="width: 150px;" type="text" name="yearmonth" class="form-control"
+                               value="<?php echo date('Y-m'); ?>">
+                    </div>
+                    <div class="form-group">
+                        <input style="width: 250px;" type="file" name="files[]" multiple class="form-control">
+                    </div>
+                    <button type="submit" name="submit" class="btn btn-primary">Nahraj</button>
+                </form>
+
             </div>
-            Turn penalty: <label for="turn_penalty_factor">200</label>
-        </span>
-    <input type="range" id="turn_penalty_factor" name="turn_penalty_factor" min="0" max="500" value="200">
-    <br><br>
-    <input id="upload-button" type="submit" value="Upload and Convert to CSV">
-</form>
-<!--<script src="upload.js"></script>-->
+
+            <p class="mt-4"><a href="#" onclick="showElement('upload-trex')"><strong>Nahraj udaje z T-REXu</strong></a>
+            </p>
+            <div style="display: none" id="upload-trex">
+                <form action="index.php" method="post" enctype="multipart/form-data">
+
+                    <div class="form-group">
+                        <input style="width: 250px;" type="file" name="trexfiles[]" multiple class="form-control">
+                    </div>
+                    <button type="submit" name="trexsubmit" class="btn btn-primary">Nahraj</button>
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function showElement(id) {
+        $("#trex-uploaded").hide()
+        $("#upload-trex").hide();
+        $("#upload-hodinky").hide();
+        //$("#upload-logger").hide();
+        $("#files-by-month").hide();
+        //$("#files-by-columbus").hide();
+        $("#files-by-year-month").hide();
+        $("#splited-hodinky").hide();
+
+        $("#" + id).show();
+    }
+
+    function showList(id) {
+        $("#" + id).toggle();
+    }
+</script>
+<script>
+
+    function parseSpeed(data) {
+
+        return data.map(line => {
+            return {"time": parseInt(line[2]) * 1000, "speed": parseFloat(line[3])};
+        });
+    }
+
+    function parseHeight(data) {
+
+        return data.map(line => {
+            return {"time": parseInt(line[2]) * 1000, "height": parseFloat(line[4])};
+        });
+    }
+
+
+    function processData(jsonData) {
+        drawChart("speedchart", parseSpeed(jsonData), "Rychlost [km/h]", "speed", "Rychlost ", " km/h");
+        drawChart("heightchart", parseHeight(jsonData), "Vyska [m]", "height", "Vyska ", " m");
+
+    }
+
+    function drawChart(idelement, data, name, field, prefix, suffix) {
+
+        // Create chart instance
+        const chart = am4core.create(idelement, am4charts.XYChart);
+        chart.paddingRight = 20;
+        chart.dateFormatter.inputDateFormat = "x";
+
+        var scrollbar = new am4charts.XYChartScrollbar();
+        // Create axes
+        const dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+        const valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+        valueAxis.title.text = name + " - " + suffix;
+
+        // Create series
+        const series = chart.series.push(new am4charts.LineSeries());
+        series.dataFields.dateX = "time";
+        series.dataFields.valueY = field;
+        series.yAxis = valueAxis;
+        series.tooltipText = prefix + "{valueY.value}" + suffix;
+        series.name = name;
+        series.strokeWidth = 2;
+        scrollbar.series.push(series);
+
+
+        // Set up cursor
+        chart.cursor = new am4charts.XYCursor();
+        chart.cursor.xAxis = dateAxis;
+        chart.cursor.behavior = "none";
+
+        // Sort data by timestamp
+        data.sort((a, b) => a.time - b.time);
+
+        // Set data for the chart
+        chart.data = data;
+
+        chart.scrollbarX = scrollbar;
+
+        chart.legend = new am4charts.Legend();
+
+        // Add chart title
+        const title = chart.titles.create();
+        title.text = name;
+        title.fontSize = 20;
+        title.marginBottom = 20;
+        title.marginTop = 20;
+
+        // Apply theme
+        chart.colors.step = 2;
+        chart.exporting.menu = new am4core.ExportMenu();
+        chart.exporting.menu.align = "right";
+        chart.exporting.menu.verticalAlign = "top";
+
+        // Apply theme
+        chart.theme = am4themes_animated;
+    }
+
+</script>
+
 </body>
 </html>

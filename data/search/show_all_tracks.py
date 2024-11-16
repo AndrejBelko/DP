@@ -14,9 +14,9 @@ def runQuery(dbName, type):
     mycursor = mydb.cursor()
 
     mycursor.execute(
-        f"select route as id, track from tracks where mapmatched = {type};"
+        f"select route as id, track, mapmatched, timestamp, length from tracks where mapmatched = {type};"
     )
-    routes = pd.DataFrame(mycursor.fetchall(), columns=['id', 'route'])
+    routes = pd.DataFrame(mycursor.fetchall(), columns=['id', 'route','mapmatched','timestamp','length'])
     mycursor.close()
     mydb.disconnect()
 
@@ -26,5 +26,5 @@ if __name__ == '__main__':
 
     # print(sys.argv[1][1:-1].split(","), sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
     r = runQuery(sys.argv[1], int(sys.argv[2]))
-
+    r = r.applymap(lambda x: x.isoformat() if isinstance(x, pd.Timestamp) else x)
     print(json.dumps(r.values.tolist()))
