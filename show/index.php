@@ -1119,78 +1119,18 @@ unset($db);
         match_count = 0;
 
         for (var i in gdata){
-            //x+= "<tr><td><div id='mapArea"+i+"' style='width:80px;height:80px;' onclick=\"showTrack("+i+")\"></div></td><td>"+gdata[i][1]+"</td><td>"+gdata[i][2]+"</td><td>"+gdata[i][3]+"</td><td>"+gdata[i][4]+"</td></tr>";
-            //x+= "<tr><td><div id='mapArea"+i+"' style='width:80px;height:80px;' onclick=\"showTrack("+i+")\"></div></td><td><div onclick=\"showTrack("+i+")\">Track ID: <b>"+gdata[i][0]+"</b><br>Matched fields: <b>"+gdata[i][1]+"</b> ("+gdata[i][5]+")<br>Starting box: <b>"+gdata[i][2]+"</b><br>Ending box: <b>"+gdata[i][3]+"</b><br>Gaps: <b>"+gdata[i][4]+"</b><br></div></td></tr>"
             x+= "<tr class='result-item' id='"+gdata[i][0]+"'><td><div id='mapArea"+i+"' style='width:80px;height:80px;' onclick=\"showTrack1("+i+")\"></div></td><td><div onclick=\"showTrack1("+i+")\"><h5><b>"+gdata[i][0]+"</b></h5>Mapmatched: <b>"+gdata[i][2]+"</b><br> Timestamp: <b>"+gdata[i][3]+"</b><br>Length: <b>"+gdata[i][4]+" m</div></td></tr>";
-            // graph2_array[1].push(i);
-            // graph2_array[0].push(gdata[i][1]);
-            // for(var j in gdata[i][5]){
-            //     graph_array.push(gdata[i][5][j]);
-            // }
         }
 
-        // graph_array.sort();
-        //
-        // for(var i in graph_array){
-        //     if(graph_array[i] === point){
-        //         count = count+1;
-        //         //console.log(graph_array[i]);
-        //     }else{
-        //         graph_x_axis.push(point);
-        //         graph_y_axis.push(count);
-        //         count = 0;
-        //         point = point +1;
-        //     }
-        // }
-        //
-        // for(var i in graph2_array[0]){
-        //     if(i == 0){
-        //         match_number = graph2_array[0][i];
-        //         match_count++;
-        //     }
-        //     else{
-        //         if(match_number == graph2_array[0][i]){
-        //             match_count++;
-        //         }
-        //         else{
-        //             graph2_x_axis.push(match_number);
-        //             graph2_y_axis.push(match_count);
-        //             match_number = graph2_array[0][i];
-        //             match_count = 1;
-        //         }
-        //     }
-        // }
-        //
-        // count = count+1;
-        // graph_x_axis.push(point);
-        // graph_y_axis.push(count);
-        //
-        // graph2_x_axis.push(match_number);
-        // graph2_y_axis.push(match_count);
-        //
-        // for(var i in graph_x_axis){
-        //     dps.push({
-        //         x: graph_x_axis[i],
-        //         y: graph_y_axis[i]
-        //     });
-        // };
-        //
-        // for(var i in graph2_x_axis){
-        //     dps2.push({
-        //         x: graph2_x_axis[i],
-        //         y: graph2_y_axis[i]
-        //     });
-        // }
         $("#totalfound").html(gdata.length);
         $("#results").html(x);
 
         for(i in gdata){
             drawTrackScaledWithoutZoom(JSON.parse(gdata[i][1]).geometry.coordinates, 80, 80, i);
         }
-        // chart.options.data[0].dataPoints = dps;
-        // chart2.options.data[0].dataPoints = dps2;
-        chart.render();
-        chart2.render();
+
+        // chart.render();
+        // chart2.render();
         dps = [];
         dps2 = [];
         isFirstToDisplay = 0;
