@@ -128,12 +128,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 $nodeScript = "node /var/www/html/upload.js '$jsonInput'"; // Pass the uploaded file path to Node.js script
 
-                echo 1;
-
                 // Execute the Node.js script
                 exec($nodeScript, $output, $return_var);
-
-                echo 1;
 
                 // Check if JSON encoding was successful
 
@@ -238,7 +234,7 @@ unset($db);
 </header>
 <?php
 echo "<table border='1'>";
-echo "<tr><th>ID</th><th>Timestamp</th><th>Mapmatched</th></tr>";
+echo "<tr><th>ID</th><th>Timestamp</th><th>Mapmatched</th><th>Action</th></tr>";
 
 if (!$err){
     foreach($row as $row_tmp){
@@ -246,6 +242,7 @@ if (!$err){
         echo "<td>" . $row_tmp['route']. "</td>";
         echo "<td>" . $row_tmp['timestamp'] . "</td>";
         echo "<td>" . $row_tmp['mapmatched'] . "</td>";
+        echo "<td><a href='delete.php?route=" . urlencode($row_tmp['route']) . "'>Delete</a></td>";
         echo "</tr>";
     }
 }
