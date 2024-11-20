@@ -93,22 +93,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $username = $_SESSION['username'];
 
                 $command = escapeshellcmd("python3 track_to_database.py $csv_file $username 0 $username" . " dataset"  );
-                shell_exec($command);
+
+                $output = shell_exec($command . " 2>&1");
+
 
                 $command = escapeshellcmd("python3 geohash_area.py ". $username);
                 exec($command, $output, $return_var);
 
-                $gpsAccuracy = $_POST['gps_accuracy'];
-                $searchRadius = $_POST['search_radius'];
-                $turnPenalty = $_POST['turn_penalty_factor'];
+//                $gpsAccuracy = $_POST['gps_accuracy'];
+//                $searchRadius = $_POST['search_radius'];
+//                $turnPenalty = $_POST['turn_penalty_factor'];
 //                $walk = $_POST['type'];
-                echo 1;
 
                 $params = [
                     'type' => 'Walk',
-                    'gps_accuracy' => 5, // Ensure $gpsAccuracy is defined
-                    'search_radius' => 50, // Ensure $searchRadius is defined
-                    'turn_penalty_factor' => 200 // Ensure $turnPenalty is defined
+                    'gps_accuracy' => "5", // Ensure $gpsAccuracy is defined
+                    'search_radius' => "50", // Ensure $searchRadius is defined
+                    'turn_penalty_factor' => "200" // Ensure $turnPenalty is defined
                 ];
 
                 // Convert the parameters array to JSON
@@ -148,25 +149,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 
-//$username1 = $_SESSION["username"];
-//
-//$sql = "SELECT meno, email, heslo FROM pouzivatel WHERE meno = :username";
-//$stmt = $db->prepare($sql);
-//$stmt->bindParam(":username", $username1, PDO::PARAM_STR);
-//$stmt->execute();
-//$row = $stmt->fetch();
-//
-//try {
-//    $db = new PDO("mysql:host=$hostname;dbname=$username1", $username, $password);
-//    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-//} catch (PDOException $e) {
-//    echo $e->getMessage();
-//}
-//
-//$sql = "SELECT * FROM tracks";
-//$stmt1 = $db->prepare($sql);
-//$stmt1->execute();
-//$row = $stmt1->fetchAll();
+$username1 = $_SESSION["username"];
+
+$sql = "SELECT meno, email, heslo FROM pouzivatel WHERE meno = :username";
+$stmt = $db->prepare($sql);
+$stmt->bindParam(":username", $username1, PDO::PARAM_STR);
+$stmt->execute();
+$row = $stmt->fetch();
+$err = false;
+try {
+    $db = new PDO("mysql:host=$hostname;dbname=$username1", $username, $password);
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    $err = true;
+}
+
+if (!$err) {
+    $sql = "SELECT * FROM tracks";
+    $stmt1 = $db->prepare($sql);
+    $stmt1->execute();
+    $row = $stmt1->fetchAll();
+}
 
 unset($stmt);
 unset($db);
@@ -235,17 +238,18 @@ unset($db);
 </header>
 <?php
 echo "<table border='1'>";
-echo "<tr><th>ID</th><th>Mapmatched</th><th>Photo</th></tr>";
+echo "<tr><th>ID</th><th>Timestamp</th><th>Mapmatched</th></tr>";
 
-// 4. Loop through each row and create a new table row
-foreach($row as $row_tmp){
-    echo "<tr>";
-    echo "<td>" . $row_tmp['route']. "</td>";
-    echo "<td>" . $row_tmp['mapmatched'] . "</td>";
-    echo "</tr>";
+if (!$err){
+    foreach($row as $row_tmp){
+        echo "<tr>";
+        echo "<td>" . $row_tmp['route']. "</td>";
+        echo "<td>" . $row_tmp['timestamp'] . "</td>";
+        echo "<td>" . $row_tmp['mapmatched'] . "</td>";
+        echo "</tr>";
+    }
 }
 
-// 5. End of HTML table
 echo "</table>";
 
 ?>

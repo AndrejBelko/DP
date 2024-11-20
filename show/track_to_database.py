@@ -7,6 +7,7 @@ import mysql.connector
 import sys
 import json
 from datetime import datetime
+import numpy as np
 
 def haversine_vectorized(latitudes, longitudes):
     R = 6371000  # Earth radius in meters
@@ -48,9 +49,6 @@ df['track'] = id
 df['track'] = df['track'].astype(int)  # Explicitly cast to int
 # df.rename(columns={'tid': 'track','lng': 'longitude','lat': 'latitude'}, inplace=True)
 # path.csv
-lat_col = df.columns.get_loc("latitude")
-lon_col = df.columns.get_loc("longitude")
-track_col = df.columns.get_loc("track")
 
 row = 0
 total = 0
@@ -68,7 +66,7 @@ for track_id, values in grouped:
         geohash.append([
             gh.encode(row_data['latitude'], row_data['longitude'], precision=7),  # Generate geohash
             track_id,  # Track ID
-            0,  # Mapmatched flag (placeholder)
+            type,  # Mapmatched flag (placeholder)
             timestamp,  # Current timestamp
             trajectory_length  # Total track length
         ])
@@ -82,7 +80,7 @@ for track_id, values in grouped:
         geohash = []
         total += 1
 
-dx = pd.DataFrame(geohash, columns=["geohash","track", "mapmatched","timestamp", "length"])
+dx = pd.DataFrame(geohash, columns=["geohash","track", "mapmatched", "timestamp", "length"])
 dx.to_csv("/home/data/import/files/"+dbName+"_path.csv", header=False, index=False, mode="a")
 
 
@@ -110,7 +108,7 @@ print(f"Generating geojsons for {len(grouped)} tracks into {dbName}_track.csv...
 
 for id, values in grouped:
     trajectory_length = haversine_vectorized(np.array(values['latitude']), np.array(values['longitude']))
-    tracks.append([id, str(geojson.Feature(geometry=geojson.LineString(values[["longitude", "latitude"]].values.tolist()))), 0, timestamp, trajectory_length])
+    tracks.append([id, str(geojson.Feature(geometry=geojson.LineString(values[["longitude", "latitude"]].values.tolist()))), type, timestamp, trajectory_length])
     row += 1
     if row > 10000:
         dx = pd.DataFrame(tracks, columns=['route', 'track', 'mapmatched', 'timestamp', "length"])

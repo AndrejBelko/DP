@@ -704,6 +704,7 @@ unset($db);
             mapmatched = '0'
         }
         findPaths()
+        showAllPaths()
     });
 
 
@@ -1004,7 +1005,7 @@ unset($db);
     }
 
     function showAllPaths(){
-
+        console.log(mapmatched)
         $.ajax({
             method: "POST",
             url: "show_all_tracks.php",
@@ -1059,7 +1060,7 @@ unset($db);
                     }
                 });
 
-                geoAllResult.addTo(map);
+                // geoAllResult.addTo(map); //displaying on map
 
                 for (var i in boxes){
                     boxes[i].removeFrom(map);
