@@ -189,6 +189,7 @@ unset($db);
     <script src="https://npmcdn.com/leaflet-geometryutil"></script>
     <script src="js/geohash.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
 </head>
 
@@ -232,25 +233,80 @@ unset($db);
         </div>
     </nav>
 </header>
-<?php
-echo "<table border='1'>";
-echo "<tr><th>ID</th><th>Timestamp</th><th>Mapmatched</th><th>Action</th></tr>";
+    <div class="container mt-5">
+        <div class="row">
+            <!-- Left Column: Table -->
+            <div class="col-md-8">
+                <table class="table table-striped table-bordered">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Timestamp</th>
+                        <th>Mapmatched</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <?php
 
-if (!$err){
-    foreach($row as $row_tmp){
-        echo "<tr>";
-        echo "<td>" . $row_tmp['route']. "</td>";
-        echo "<td>" . $row_tmp['timestamp'] . "</td>";
-        echo "<td>" . $row_tmp['mapmatched'] . "</td>";
-        echo "<td><a href='delete.php?route=" . urlencode($row_tmp['route']) . "'>Delete</a></td>";
-        echo "</tr>";
-    }
-}
+                        if (!$err){
+                            foreach($row as $row_tmp){
+                                echo "<tr>";
+                                echo "<td>" . $row_tmp['route']. "</td>";
+                                echo "<td>" . $row_tmp['timestamp'] . "</td>";
+                                echo "<td>" . $row_tmp['mapmatched'] . "</td>";
+                                echo "<td><a href='delete.php?route=" . urlencode($row_tmp['route']) . "' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a></td>";
+                                echo "</tr>";
+                            }
+                        }
 
-echo "</table>";
+                        echo "</table>";
 
-?>
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Right Column: Links -->
+            <div class="col-md-4">
+                <div class="d-flex flex-column">
+                    <p class="mt-4"><a href="#" onclick="showElement('upload-hodinky')"><strong>Nahraj udaje z hodiniek</strong></a>
+                    </p>
+                    <div style="display: none" id="upload-hodinky">
+                        <form action="profile.php" method="post" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label>Zadaj Rok-Mesiac</label>
+                                <input style="width: 150px;" type="text" name="yearmonth" class="form-control"
+                                       value="<?php echo date('Y-m'); ?>">
+                            </div>
+                            <div class="form-group">
+                                <input style="width: 250px;" type="file" name="files" multiple class="form-control">
+                            </div>
+                            <button type="submit" name="submit" class="btn btn-primary">Nahraj</button>
+                        </form>
+
+                    </div>
+
+                    <p class="mt-4"><a href="#" onclick="showElement('upload-trex')"><strong>Nahraj udaje z T-REXu</strong></a>
+                    </p>
+                    <div style="display: none" id="upload-trex">
+                        <form action="profile.php" method="post" enctype="multipart/form-data">
+
+                            <div class="form-group">
+                                <input style="width: 250px;" type="file" name="trexfiles" multiple class="form-control">
+                            </div>
+                            <button type="submit" name="trexsubmit" class="btn btn-primary">Nahraj</button>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Include Bootstrap JS (optional, for advanced interactions) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+</html>
 <script>
     function drawTrackScaledWithoutZoom(coordinates, svgWidth, svgHeight, i){
         // Find the minimum and maximum values for x and y coordinates.
@@ -315,79 +371,6 @@ echo "</table>";
         isFirstToDisplay = 0;
     }
 </script>
-
-<div class="container-fluid">
-
-    <div class="row">
-        <div class="col-12 col-lg-8">
-            <script>
-                function showid() {
-                    document.getElementById("id-hidden").style.display = "none";
-                    document.getElementById("id-visible").style.display = "inline";
-                }
-
-                function hideid() {
-                    document.getElementById("id-hidden").style.display = "inline";
-                    document.getElementById("id-visible").style.display = "none";
-                }
-            </script>
-
-            <div id="selectedid" ></div>
-            <div id="speedchart" class="chartdiv"></div>
-            <div id="heightchart" class="chartdiv"></div>
-
-
-        </div>
-        <div id="datacol" class="col-12 col-lg-4">
-
-<!--            --><?php //if ($message != ''): ?>
-<!--                <div class="alert alert-info">-->
-<!--                    --><?php //echo $message; ?>
-<!--                </div>-->
-<!--            --><?php //endif; ?>
-<!--            --><?php //if ($message2 != ''): ?>
-<!--                <div class="alert alert-info">-->
-<!--                    --><?php //echo $message2; ?>
-<!--                </div>-->
-<!--            --><?php //endif; ?>
-
-            <p class="mt-4"><a href="#" onclick="showElement('upload-hodinky')"><strong>Nahraj udaje z hodiniek</strong></a>
-            </p>
-            <div style="display: none" id="upload-hodinky">
-                <form action="profile.php" method="post" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label>Zadaj Rok-Mesiac</label>
-                        <input style="width: 150px;" type="text" name="yearmonth" class="form-control"
-                               value="<?php echo date('Y-m'); ?>">
-                    </div>
-                    <div class="form-group">
-                        <input style="width: 250px;" type="file" name="files" multiple class="form-control">
-                    </div>
-                    <button type="submit" name="submit" class="btn btn-primary">Nahraj</button>
-                </form>
-
-            </div>
-
-            <p class="mt-4"><a href="#" onclick="showElement('upload-trex')"><strong>Nahraj udaje z T-REXu</strong></a>
-            </p>
-            <div style="display: none" id="upload-trex">
-                <form action="profile.php" method="post" enctype="multipart/form-data">
-
-                    <div class="form-group">
-                        <input style="width: 250px;" type="file" name="trexfiles" multiple class="form-control">
-                    </div>
-                    <button type="submit" name="trexsubmit" class="btn btn-primary">Nahraj</button>
-                </form>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-</div>
-
 
 <!-- Bootstrap JS and dependencies -->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
