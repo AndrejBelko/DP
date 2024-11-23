@@ -47,7 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Store the uploaded GPX file in the target directory
         $gpx_file = $uploads_dir . $name;
         if (move_uploaded_file($tmp_name, $gpx_file)) {
-            echo "The file " . htmlspecialchars($name) . " has been uploaded successfully.<br>";
 
             if (isset($_FILES['trexfiles'])){
                 // Create CSV file name by replacing .gpx with .csv
@@ -67,7 +66,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             // Check if the CSV file was generated
             if (file_exists($csv_file)) {
-                echo "CSV file generated successfully.<br>";
 
                 // Insert file information into the database
                 $sql = "SELECT id FROM pouzivatel WHERE meno = :username";
@@ -85,14 +83,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 $stmt->execute();
 
-                echo "File information saved to the database.<br>";
-
-                // Optionally serve the CSV file or show a link to download it
-                echo "<a href='$csv_file' download>Download the CSV file</a>";
-
                 $username = $_SESSION['username'];
 
-                $command = escapeshellcmd("python3 track_to_database.py $csv_file $username 0 $username" . " dataset"  );
+                $command = escapeshellcmd("python3 track_to_database.py $csv_file $username 0 $username" . " dataset" );
 
                 $output = shell_exec($command . " 2>&1");
 
@@ -255,7 +248,7 @@ unset($db);
                                 echo "<td>" . $row_tmp['route']. "</td>";
                                 echo "<td>" . $row_tmp['timestamp'] . "</td>";
                                 echo "<td>" . $row_tmp['mapmatched'] . "</td>";
-                                echo "<td><a href='delete.php?route=" . urlencode($row_tmp['route']) . "' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a></td>";
+                                echo "<td><a href='delete.php?route=" . urlencode($row_tmp['route']) . "' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a><a href='download.php?route=" . urlencode($row_tmp['route']) . "' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a></td>";
                                 echo "</tr>";
                             }
                         }

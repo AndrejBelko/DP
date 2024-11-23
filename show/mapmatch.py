@@ -10,7 +10,7 @@ import re
 def create_file_for_db(data,track,user,type,name):
     base_folder = "/home/data/import/files/mapmatched" # folder in which users routes will be stored
 
-    file_path = path.join(base_folder, track)
+    file_path = path.join(base_folder, track + '.csv')
     file = open(file_path,'w')
     file.write("track,latitude,longitude")
     for i in range(len(data)):
