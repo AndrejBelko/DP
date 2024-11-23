@@ -47,7 +47,11 @@ df = pd.read_csv(csvPath)
 df = df.fillna('')
 df['track'] = id
 df['track'] = df['track'].astype(int)  # Explicitly cast to int
-# df.rename(columns={'tid': 'track','lng': 'longitude','lat': 'latitude'}, inplace=True)
+if "lat" in df.columns:
+    df.rename(columns={'lat': 'latitude'}, inplace=True)
+
+if "lon" in df.columns:
+    df.rename(columns={'lon': 'longitude'}, inplace=True)
 # path.csv
 
 row = 0
@@ -103,9 +107,12 @@ total = 0
 df = pd.read_csv(csvPath)
 df['track'] = id
 grouped = df.groupby('track')
+if "lat" in df.columns:
+    df.rename(columns={'lat': 'latitude'}, inplace=True)
+if "lon" in df.columns:
+    df.rename(columns={'lon': 'longitude'}, inplace=True)
 
 print(f"Generating geojsons for {len(grouped)} tracks into {dbName}_track.csv...")
-
 for id, values in grouped:
     trajectory_length = haversine_vectorized(np.array(values['latitude']), np.array(values['longitude']))
     tracks.append([id, str(geojson.Feature(geometry=geojson.LineString(values[["longitude", "latitude"]].values.tolist()))), type, timestamp, trajectory_length])

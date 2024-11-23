@@ -84,12 +84,22 @@ unset($db);
 
     foreach ($datasets as $key => $value){
         if (isset($_SESSION["username"]) && $queryDB == $value['dbname']){
+            echo 1;
             $DBinfo = $value;
             break;
         } else if (!isset($_SESSION["username"])){
-            $DBinfo = $value;
-            $queryDB = $value['dbname'];
-            break;
+            if(isset($_GET['db'])){
+                $name = $_GET['db'];
+                if ($name == $value['dbname']){
+                    $DBinfo = $value;
+                    $queryDB = $value['dbname'];
+                    break;
+                }
+            } else {
+                $DBinfo = $value;
+                $queryDB = $value['dbname'];
+                break;
+            }
         }
     }
     if (empty($DBinfo)){
@@ -97,7 +107,6 @@ unset($db);
         $DBinfo = $value;
         $queryDB = $value['dbname'];
     }
-    var_dump($DBinfo);
 
     ?>
 

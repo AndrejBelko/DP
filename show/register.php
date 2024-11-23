@@ -54,14 +54,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $errmsg = "";
 
     $password = $_POST['password'];
+    $password_again = $_POST['password_again'];
 
     if (checkLength($_POST['password'], 6, 32) === false) {
         $errmsg .= "<p class='text-danger'>Heslo musí mať 6 až 32 znakov.</p>";
     }
-
     if (userExist($db, $_POST['email']) === true) {
         $errmsg .= "<p class='text-danger'>Používateľ s týmto e-mailom už existuje.</p>";
     }
+//    if ($password != $password_again) {
+//        $errmsg .= "<p class='text-danger'>Heslá sa nezhodujú.</p>";
+//    }
 
     if (empty($errmsg)) {
         $sql = "INSERT INTO pouzivatel (meno, email, heslo) VALUES (:meno, :email, :password)";
@@ -168,7 +171,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <div class="d-flex flex-row align-items-center mb-4">
                                         <i class="fas fa-key fa-lg me-3 fa-fw"></i>
                                         <div data-mdb-input-init class="form-outline flex-fill mb-0">
-                                            <input type="password" name="password"
+                                            <input type="password" name="password_again"
                                                    id="password_again" class="form-control"
                                                    required class="form-control"/>
                                             <label class="form-label" for="password_again">Potvrdenie hesla</label>

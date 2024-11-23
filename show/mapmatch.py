@@ -4,6 +4,7 @@ from os.path import exists
 import gpxpy
 import base64
 import subprocess
+import re
 
 ## Save map matched data to a csv file
 def create_file_for_db(data,track,user,type,name):
