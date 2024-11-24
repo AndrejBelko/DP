@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Define the input array for the container request
                 $input = [
-                    'container' => "valhalla", // Container name
+                    'container' => "gps_valhalla", // Container name
                     'username' => $username, // Ensure $username is defined
                     'parameters' => json_decode($parametersJson), // Decode back to array to ensure it's properly structured
                     'file' => $gpx_file // Ensure $gpx_file is defined
