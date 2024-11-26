@@ -70,16 +70,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
 
 <section class="vh-100" style="background-color: darkslategray;">
-    <header class="mb-3">
-        <nav class="navbar navbar-expand bg-body-tertiary" data-bs-theme="dark">
-            <div class="collapse navbar-collapse justify-content-center" id="navbarNavDropdown">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" aria-current="page" href="register.php">Registrácia</a>
-                    </li>
-            </div>
-        </nav>
-    </header>
     <div class="container">
         <div class="row d-flex justify-content-center align-items-center">
             <div class="col-lg-12 col-xl-11">
@@ -89,6 +79,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="col-md-10 col-lg-6 col-xl-5 order-2 order-lg-1">
 
                                 <p class="text-center h1 fw-bold mb-5 mx-1 mx-md-4 mt-4">Prihlásenie</p>
+                                <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
+                                    <a href="register.php" class="btn btn-primary btn-lg"
+                                       style="background-color: darkslategray; border-color: darkslategray;">
+                                        Prihlásenie
+                                    </a>
+                                </div>
 
                                 <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>"
                                       class="mx-1 mx-md-4">
@@ -114,7 +110,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     </div>
 
                                     <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
-                                        <button type="submit" style="background-color: darkslategray; border-color: darkslategray;" data-mdb-button-init data-mdb-ripple-init
+                                        <button type="submit"
+                                                style="background-color: darkslategray; border-color: darkslategray;"
+                                                data-mdb-button-init data-mdb-ripple-init
                                                 class="btn btn-primary btn-lg">Prihlásenie
                                         </button>
                                     </div>

@@ -206,16 +206,11 @@ unset($db);
                             Profil
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link fs-5" href="upload.php">
-                            Nahranie nových trajektórií
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link fs-5" href="pdf.php">
-                            Príručka
-                        </a>
-                    </li>
+<!--                    <li class="nav-item">-->
+<!--                        <a class="nav-link fs-5" href="pdf.php">-->
+<!--                            Príručka-->
+<!--                        </a>-->
+<!--                    </li>-->
                     <li class="nav-item">
                         <a class="nav-link fs-5" href="logout.php">
                             Odhlásiť sa
