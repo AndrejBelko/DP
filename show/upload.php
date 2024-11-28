@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bindParam(":username", $username, PDO::PARAM_STR);
         $stmt->execute();
 
-        if ($stmt->rowCount() == 1) {
+        if ($stmt->rowCount() != 1) {
             throw new Exception("Failed to upload.", 500);
         }
 
