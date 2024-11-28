@@ -46,7 +46,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             throw new Exception("Failed to upload.", 500);
         }
 
-        $username = "mobile";
+
+        $username = "";
+
+        if (preg_match('/id-(.*?)\//', $headers["x-folder"], $matches)) {
+            $username = $matches[1]; // This will contain '16112023pro'
+        }
+
+        $sql = "SELECT id FROM pouzivatel WHERE meno = :username";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(":username", $username, PDO::PARAM_STR);
+        $stmt->execute();
+
+        if ($stmt->rowCount() == 1) {
+            throw new Exception("Failed to upload.", 500);
+        }
+
+        $row = $stmt->fetch();
 
         $command = "python3 track_to_database.py $target_file $username 0 $username" . " dataset 2>&1";
         exec($command, $output, $return_var);
