@@ -97,8 +97,10 @@ unset($db);
 
     foreach ($datasets as $key => $value) {
         if (isset($_SESSION["username"]) && $queryDB == $value['dbname']) {
-            $DBinfo = $value;
-            break;
+            if (file_exists("center/$queryDB.json")) {
+                $DBinfo = $value;
+                break;
+            }
         } else if (!isset($_SESSION["username"])) {
             if (isset($_GET['db'])) {
                 $name = $_GET['db'];
@@ -119,11 +121,11 @@ unset($db);
     if (empty($DBinfo)) {
         $value = array(
             "center" => array(
-                "lat" => 0,
-                "lon" => 0
+                "lat" => 48.151965,
+                "lon" => 17.072995
             ),
-            "title" => "",
-            "dbname" => "",
+            "title" => " ",
+            "dbname" => " ",
             "attribution" => ""
         );
         $DBinfo = $value;
@@ -429,6 +431,7 @@ unset($db);
 
 
     var queryDB = "<?php echo $queryDB; ?>";
+    console.log(queryDB)
     var map = L.map('map').setView([<?php echo $DBinfo['center']['lat'] . ", " . $DBinfo['center']['lon'];?>], 13);
 
     var gdata;
@@ -1043,7 +1046,7 @@ unset($db);
 
     function showAllPaths() {
         console.log(mapmatched)
-        if (queryDB !== '') {
+        if (queryDB !== " ") {
             $.ajax({
                 method: "POST",
                 url: "show_all_tracks.php",
@@ -1122,16 +1125,11 @@ unset($db);
         }
     }
 
-    if (queryDB !== ''){
+    if (queryDB !== " "){
         $.getJSON("coverage/<?php echo $DBinfo['dbname']?>.geojson", function (data) {
             L.geoJSON(data).addTo(map);
         });
     }
-
-
-    $(document).ready(function onDocumentReady() {
-        toastr["info"]("Draw at least 2 areas of interest in the right order")
-    });
 
     function showResults1() {
 
