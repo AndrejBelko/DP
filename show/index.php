@@ -14,8 +14,20 @@ try {
 }
 
 
-$sql = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME NOT IN (SELECT meno 
-    FROM hashcode.pouzivatel) and SCHEMA_NAME NOT LIKE  '%mysql%'  and SCHEMA_NAME NOT LIKE  '%information_schema%'  and SCHEMA_NAME NOT LIKE  '%performance_schema%' and SCHEMA_NAME NOT LIKE  '%sys%' and SCHEMA_NAME NOT LIKE  '%hashcode%' ";
+$sql = "
+SELECT 
+    SCHEMA_NAME 
+FROM INFORMATION_SCHEMA.SCHEMATA 
+WHERE SCHEMA_NAME NOT IN (
+    SELECT meno 
+    FROM hashcode.pouzivatel
+)
+  and (SCHEMA_NAME NOT LIKE  '%mysql%'
+  and SCHEMA_NAME NOT LIKE  '%information_schema%'  
+  and SCHEMA_NAME NOT LIKE  '%performance_schema%' 
+  and SCHEMA_NAME NOT LIKE  '%sys%' 
+  and SCHEMA_NAME NOT LIKE  '%hashcode%')
+";
 
 $stmt = $db->prepare($sql);
 
@@ -96,14 +108,24 @@ unset($db);
                     break;
                 }
             } else {
-                $DBinfo = $value;
-                $queryDB = $value['dbname'];
-                break;
+                if (in_array($value['dbname'], $schemaNames)) {
+                    $DBinfo = $value;
+                    $queryDB = $value['dbname'];
+                    break;
+                }
             }
         }
     }
     if (empty($DBinfo)) {
-        $value = $datasets[0];
+        $value = array(
+            "center" => array(
+                "lat" => 0,
+                "lon" => 0
+            ),
+            "title" => "",
+            "dbname" => "",
+            "attribution" => ""
+        );
         $DBinfo = $value;
         $queryDB = $value['dbname'];
     }
@@ -243,11 +265,13 @@ unset($db);
                     <div class="row mb-3">
                         <div class="col-md-6 d-flex align-items-center">
                             <label for="gsStart" class="me-2">Start ≤</label>
-                            <input type="number" id="gsStart" class="form-control w-auto" placeholder="1" size="1" value="3" min="1">
+                            <input type="number" id="gsStart" class="form-control w-auto" placeholder="1" size="1"
+                                   value="3" min="1">
                         </div>
                         <div class="col-md-6 d-flex align-items-center">
                             <label for="gsEnd" class="me-2">End &ge;</label>
-                            <input type="number" id="gsEnd" class="form-control w-auto" placeholder="1" size="1" value="2">
+                            <input type="number" id="gsEnd" class="form-control w-auto" placeholder="1" size="1"
+                                   value="2">
                         </div>
                     </div>
 
@@ -1019,86 +1043,91 @@ unset($db);
 
     function showAllPaths() {
         console.log(mapmatched)
-        $.ajax({
-            method: "POST",
-            url: "show_all_tracks.php",
-            dataType: "json",
-            data: {
-                "dbName": queryDB,
-                "type": mapmatched
-            }
-        })
-            .done(function (json) {
-                // console.log(json);
-                gdata = json;
-                showResults1();
-                if (geoAllResult != null) {
-                    map.removeLayer(geoAllResult);
-                }
-                geojson = {
-                    "type": "FeatureCollection",
-                    "features": json.map(function myFunction(item) {
-                        var x = JSON.parse(item[1]);
-                        console.log(x)
-                        x.properties['id'] = item[0];
-                        return x;
-                    })
-                };
-
-                geoAllResult = L.geoJSON(geojson, {
-                    style: function (feature, layer) {
-                        return {
-                            weight: 4,
-                            opacity: 0.6,
-                            color: line_colors[Math.floor(Math.random() * 4)],
-                            fillOpacity: 0.6
-                        };
-                    },
-
-                    onEachFeature: function (feature, layer) {
-                        layer.on('mouseover', function () {
-                            geoAllResult.setStyle({weight: 4, opacity: 0.25, fillOpacity: 0.25});
-                            this.setStyle({
-                                weight: 8,
-                                opacity: 1,
-                                fillOpacity: 0.6
-                            });
-                            this.bringToFront();
-                            $(".result-item").hide();
-                            $("#" + this.feature.properties.id).show();
-                        });
-                        layer.on('mouseout', function () {
-                            geoAllResult.setStyle({weight: 4, opacity: 0.6, fillOpacity: 0.6});
-                            this.setStyle({
-                                weight: 4,
-                                opacity: 0.6,
-                                fillOpacity: 0.6
-                            });
-                            $(".result-item").show();
-                        });
-                    }
-                });
-
-                // geoAllResult.addTo(map); //displaying on map
-
-                for (var i in boxes) {
-                    boxes[i].removeFrom(map);
-                    boxes[i].bindPopup("Box " + (parseInt(i) + 1) + " <br> <a href='#' onclick='removeBox(" + i + ")'>Remove</a>");
-                    boxes[i].addTo(map);
+        if (queryDB !== '') {
+            $.ajax({
+                method: "POST",
+                url: "show_all_tracks.php",
+                dataType: "json",
+                data: {
+                    "dbName": queryDB,
+                    "type": mapmatched
                 }
             })
-            .fail(function (jqXHR, textStatus, errorThrown) {
-                console.error("Request failed:", textStatus, errorThrown);
-                console.log("Response text:", jqXHR.responseText);
-            });
-        svg = [];
-        testSvg = [];
-        all_trajectories = true;
+                .done(function (json) {
+                    // console.log(json);
+                    gdata = json;
+                    showResults1();
+                    if (geoAllResult != null) {
+                        map.removeLayer(geoAllResult);
+                    }
+                    geojson = {
+                        "type": "FeatureCollection",
+                        "features": json.map(function myFunction(item) {
+                            var x = JSON.parse(item[1]);
+                            console.log(x)
+                            x.properties['id'] = item[0];
+                            return x;
+                        })
+                    };
+
+                    geoAllResult = L.geoJSON(geojson, {
+                        style: function (feature, layer) {
+                            return {
+                                weight: 4,
+                                opacity: 0.6,
+                                color: line_colors[Math.floor(Math.random() * 4)],
+                                fillOpacity: 0.6
+                            };
+                        },
+
+                        onEachFeature: function (feature, layer) {
+                            layer.on('mouseover', function () {
+                                geoAllResult.setStyle({weight: 4, opacity: 0.25, fillOpacity: 0.25});
+                                this.setStyle({
+                                    weight: 8,
+                                    opacity: 1,
+                                    fillOpacity: 0.6
+                                });
+                                this.bringToFront();
+                                $(".result-item").hide();
+                                $("#" + this.feature.properties.id).show();
+                            });
+                            layer.on('mouseout', function () {
+                                geoAllResult.setStyle({weight: 4, opacity: 0.6, fillOpacity: 0.6});
+                                this.setStyle({
+                                    weight: 4,
+                                    opacity: 0.6,
+                                    fillOpacity: 0.6
+                                });
+                                $(".result-item").show();
+                            });
+                        }
+                    });
+
+                    // geoAllResult.addTo(map); //displaying on map
+
+                    for (var i in boxes) {
+                        boxes[i].removeFrom(map);
+                        boxes[i].bindPopup("Box " + (parseInt(i) + 1) + " <br> <a href='#' onclick='removeBox(" + i + ")'>Remove</a>");
+                        boxes[i].addTo(map);
+                    }
+                })
+                .fail(function (jqXHR, textStatus, errorThrown) {
+                    console.error("Request failed:", textStatus, errorThrown);
+                    console.log("Response text:", jqXHR.responseText);
+                });
+            svg = [];
+            testSvg = [];
+            all_trajectories = true;
+        }
     }
 
-    $.getJSON("coverage/<?php echo $DBinfo['dbname']?>.geojson", function (data) {
-        L.geoJSON(data).addTo(map);
-    });
+    if (queryDB !== ''){
+        $.getJSON("coverage/<?php echo $DBinfo['dbname']?>.geojson", function (data) {
+            L.geoJSON(data).addTo(map);
+        });
+    }
+
 
     $(document).ready(function onDocumentReady() {
         toastr["info"]("Draw at least 2 areas of interest in the right order")

@@ -216,6 +216,11 @@ unset($db);
                             Odhlásiť sa
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <div class="nav-link fs-5">
+                            Vitaj, <?php echo $_SESSION['username'] ?>
+                        </div>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -230,20 +235,33 @@ unset($db);
                     <tr>
                         <th>ID</th>
                         <th>Timestamp</th>
+                        <th>Original</th>
                         <th>Mapmatched</th>
-                        <th>Action</th>
                     </tr>
                     </thead>
                     <tbody>
                         <?php
 
                         if (!$err){
-                            foreach($row as $row_tmp){
+                            for ($i = 0; $i < count($row); $i += 2) {
+                                $row_tmp = $row[$i]; // Access every second element
                                 echo "<tr>";
-                                echo "<td>" . $row_tmp['route']. "</td>";
+                                echo "<td>" . $row_tmp['route'] . "</td>";
                                 echo "<td>" . $row_tmp['timestamp'] . "</td>";
-                                echo "<td>" . $row_tmp['mapmatched'] . "</td>";
-                                echo "<td><a href='delete.php?route=" . urlencode($row_tmp['route']) . "' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a><a href='download.php?route=" . urlencode($row_tmp['route']) . "' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a></td>";
+                                echo "<td>
+            <a href='delete.php?route=" . urlencode($row_tmp['route']) . "' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
+            <a href='download.php?route=" . urlencode($row_tmp['route']) . "' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
+          </td>";
+                                // Ensure `$i + 1` exists before accessing it
+                                if (isset($row[$i + 1])) {
+                                    $next_row = $row[$i + 1]; // Access the next element for `$i + 1`
+                                    echo "<td>
+                <a href='delete.php?route=" . urlencode($next_row['route']) . "' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
+                <a href='download.php?route=" . urlencode($next_row['route']) . "' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
+              </td>";
+                                } else {
+                                    echo "<td>—</td>"; // Placeholder if there is no `$i + 1`
+                                }
                                 echo "</tr>";
                             }
                         }
