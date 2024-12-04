@@ -52,6 +52,16 @@ if "lat" in df.columns:
 
 if "lon" in df.columns:
     df.rename(columns={'lon': 'longitude'}, inplace=True)
+
+if "LATITUDE N/S" in df.columns:
+    df.rename(columns={'LATITUDE N/S': 'latitude'}, inplace=True)
+    df['latitude'] = df['latitude'].str.slice(0, -1)
+    df['latitude'] = df['latitude'].astype(float)
+
+if "LONGITUDE E/W" in df.columns:
+    df.rename(columns={'LONGITUDE E/W': 'longitude'}, inplace=True)
+    df['longitude'] = df['longitude'].str.slice(0, -1)
+    df['longitude'] = df['longitude'].astype(float)
 # path.csv
 
 row = 0
@@ -111,6 +121,16 @@ if "lat" in df.columns:
     df.rename(columns={'lat': 'latitude'}, inplace=True)
 if "lon" in df.columns:
     df.rename(columns={'lon': 'longitude'}, inplace=True)
+
+if "LATITUDE N/S" in df.columns:
+    df.rename(columns={'LATITUDE N/S': 'latitude'}, inplace=True)
+    df['latitude'] = df['latitude'].str.slice(0, -1)
+    df['latitude'] = df['latitude'].astype(float)
+
+if "LONGITUDE E/W" in df.columns:
+    df.rename(columns={'LONGITUDE E/W': 'longitude'}, inplace=True)
+    df['longitude'] = df['longitude'].str.slice(0, -1)
+    df['longitude'] = df['longitude'].astype(float)
 
 print(f"Generating geojsons for {len(grouped)} tracks into {dbName}_track.csv...")
 for id, values in grouped:

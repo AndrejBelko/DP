@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (isset($_FILES['trexfiles']) && pathinfo($name, PATHINFO_EXTENSION) != 'gpx'){
             echo "Please upload a valid GPX file.";
             exit;
-        } else if(isset($_FILES['files']) && pathinfo($name, PATHINFO_EXTENSION) != 'csv'){
+        } else if(isset($_FILES['files']) && strtolower(pathinfo($name, PATHINFO_EXTENSION)) != 'csv'){
             echo "Please upload a valid csv file.";
             exit;
         }
@@ -88,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $command = escapeshellcmd("python3 track_to_database.py $csv_file $username 0 $username" . " dataset" );
 
                 $output = shell_exec($command . " 2>&1");
+                echo $output;
 
 
                 $command = escapeshellcmd("python3 geohash_area.py ". $username);
