@@ -179,6 +179,11 @@ unset($db);
         #map {
             height: calc(100% - 65px);
             width: 100%;
+            z-index: 1;
+        }
+
+        .navbar {
+            z-index: 2;
         }
 
         .alg-form input {
@@ -253,75 +258,75 @@ unset($db);
 
 <div class="container" id="sidebar">
     <div class="row">
-        <div class="col-lg-12">
-            <!-- <h1>Parameters</h1> -->
-            <a class="close" onclick="sidebar.hide()">x</a>
-            <form class="form-inline alg-form">
-                <h4> Dataset: <?php echo $DBinfo['title']; ?></h4>
+        <div class="col-12">
+            <a class="btn-close float-end" onclick="sidebar.hide()"></a>
+            <form class="mt-3">
+                <h4>Dataset: <?php echo $DBinfo['title']; ?></h4>
                 <h6>
                     <strong>Boxes drawn: <span id="psize">0</span></strong>
                 </h6>
 
-                <!-- Use Bootstrap Grid -->
-                <div class="container">
-                    <div class="row mb-3">
-                        <div class="col-md-6 d-flex align-items-center">
-                            <label for="gsStart" class="me-2">Start ≤</label>
-                            <input type="number" id="gsStart" class="form-control w-auto" placeholder="1" size="1"
-                                   value="3" min="1">
-                        </div>
-                        <div class="col-md-6 d-flex align-items-center">
-                            <label for="gsEnd" class="me-2">End &ge;</label>
-                            <input type="number" id="gsEnd" class="form-control w-auto" placeholder="1" size="1"
-                                   value="2">
-                        </div>
+                <!-- Form Section -->
+                <div class="row g-3 my-3">
+                    <div class="col-md-6">
+                        <label for="gsStart" class="form-label">Start ≤</label>
+                        <input type="number" id="gsStart" class="form-control" placeholder="1" value="3" min="1">
                     </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6 d-flex align-items-center">
-                            <label for="gsMatch" class="me-2">Matches &ge;</label>
-                            <input type="number" id="gsMatch" class="form-control w-auto" placeholder="" size="1">
-                        </div>
-                        <div class="col-md-6 d-flex align-items-center">
-                            <label for="gaps" class="me-2">Gaps &le;</label>
-                            <input type="number" id="gaps" class="form-control w-auto" placeholder="" size="1">
-                        </div>
+                    <div class="col-md-6">
+                        <label for="gsEnd" class="form-label">End &ge;</label>
+                        <input type="number" id="gsEnd" class="form-control" placeholder="1" value="2">
                     </div>
                 </div>
-            </form>
+                <div class="row g-3 my-3">
+                    <div class="col-md-6">
+                        <label for="gsMatch" class="form-label">Matches &ge;</label>
+                        <input type="number" id="gsMatch" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="gaps" class="form-label">Gaps &le;</label>
+                        <input type="number" id="gaps" class="form-control">
+                    </div>
+                </div>
 
-            <div style="margin-top: 2%; margin-bottom: 5%;">
-                <button class="btn btn-success" onclick="findPaths()">Apply</button>
-            </div>
+                <div class="text-center my-3">
+                    <button type="button" class="btn btn-success" onclick="findPaths()">Apply</button>
+                </div>
+            </form>
 
             <hr>
         </div>
     </div>
-    <div class="col-lg-12">
-        <label class="switch">
-            <input type="checkbox" id="toggleSwitch">
-            <span class="slider"> Mapmatch</span>
-        </label>
-    </div>
+
+    <!-- Toggle Switch -->
     <div class="row">
-        <div class="col-lg-12">
+        <div class="col-12 text-center my-3">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="toggleSwitch">
+                <label class="form-check-label" for="toggleSwitch">Mapmatch</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="row">
+        <div class="col-12">
             <div id="resultsbox" style="display: none;">
-                <p>Found <span id="totalfound"></span> -
-                    <button class="btn btn-secondary" onclick="showAll()">Show all</button>
+                <p>
+                    Found <span id="totalfound"></span> -
+                    <button class="btn btn-secondary btn-sm" onclick="showAll()">Show all</button>
                 </p>
                 <div style="height: fit-content; overflow-y:auto;">
-                    <table class="table" id="datatable">
-
-                        <tbody id="results">
-                        </tbody>
+                    <table class="table table-hover table-striped" id="datatable">
+                        <tbody id="results"></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <div style="position: relative; bottom: 0%; margin-top:10%">
-        <div class="col-lg-12">
+    <!-- Footer -->
+    <footer class="mt-auto py-3">
+        <div class="text-center">
             <?php
             if (isset($_SESSION["username"])) {
                 foreach ($datasets as $key => $value) {
@@ -337,16 +342,14 @@ unset($db);
                     echo "<a href='?db=" . $value . "'>" . $value . "</a> |";
                 }
             }
-
             ?>
-
-            <a href="https://mcomputing.eu">Algorithm &copy; mcomputing.eu</a> <br>
-            <a href="nwa.php">Needleman–Wunsch</a> |
-            <a href="swa.php">Smith–Waterman</a>
+            <p class="small">Algorithm &copy; <a href="https://mcomputing.eu" class="text-decoration-none">mcomputing.eu</a></p>
+            <a href="nwa.php" class="text-decoration-none">Needleman–Wunsch</a> |
+            <a href="swa.php" class="text-decoration-none">Smith–Waterman</a>
         </div>
-    </div>
-
+    </footer>
 </div>
+
 
 <div class="container" id="sidebarRight">
     <div class="row">
@@ -1209,6 +1212,7 @@ unset($db);
 </script>
 <script src="js/jquery.tablesorter.min.js"></script>
 <link rel="stylesheet" href="css/theme.blue.css"/>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 <script src="js/ie10-viewport-bug-workaround.js"></script>
