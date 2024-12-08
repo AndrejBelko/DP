@@ -26,8 +26,9 @@ def haversine_vectorized(latitudes, longitudes):
 # Get the input CSV path and database name from command-line arguments
 csvPath = sys.argv[1]
 dbName = sys.argv[2]
-type = int(sys.argv[3])
-title = sys.argv[4]
+mapmatched = int(sys.argv[3])
+type = sys.argv[4]
+title = sys.argv[5]
 timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 print("Reading dataset...")
@@ -38,7 +39,7 @@ try:
     dx = pd.read_csv("/home/data/import/files/" + dbName + "_path.csv")
     id = int(dx['track'].max()) + 1
 except FileNotFoundError:
-    dx = pd.DataFrame(geohash, columns=["geohash", "track", "mapmatched", "timestamp", "length"])
+    dx = pd.DataFrame(geohash, columns=["geohash", "track", "mapmatched", "type", "timestamp", "length"])
     dx['track'] = dx['track'].astype(int)  # Explicitly cast to int
     dx.to_csv("/home/data/import/files/" + dbName + "_path.csv", index=False, mode="w")
     id = 0
@@ -80,7 +81,8 @@ for track_id, values in grouped:
         geohash.append([
             gh.encode(row_data['latitude'], row_data['longitude'], precision=7),  # Generate geohash
             track_id,  # Track ID
-            type,  # Mapmatched flag (placeholder)
+            mapmatched,  # Mapmatched flag (placeholder)
+            type,
             timestamp,  # Current timestamp
             trajectory_length  # Total track length
         ])
@@ -88,13 +90,13 @@ for track_id, values in grouped:
 
     # Write to file in batches
     if row > 1000000:
-        dx = pd.DataFrame(geohash, columns=["geohash", "track", "mapmatched", "timestamp", "length"])
+        dx = pd.DataFrame(geohash, columns=["geohash", "track", "mapmatched", "type", "timestamp", "length"])
         dx.to_csv(f"/home/data/import/files/{dbName}_path.csv", header=False, index=False, mode="a")
         row = 0
         geohash = []
         total += 1
 
-dx = pd.DataFrame(geohash, columns=["geohash","track", "mapmatched", "timestamp", "length"])
+dx = pd.DataFrame(geohash, columns=["geohash","track", "mapmatched", "type", "timestamp", "length"])
 dx.to_csv("/home/data/import/files/"+dbName+"_path.csv", header=False, index=False, mode="a")
 
 
@@ -107,7 +109,7 @@ file_path = f"/home/data/import/files/{dbName}_track.csv"
 try:
     dx = pd.read_csv(file_path, sep=';')
 except FileNotFoundError:
-    dx = pd.DataFrame(tracks, columns=['route', 'track', "mapmatched","timestamp", "length"])
+    dx = pd.DataFrame(tracks, columns=['route', 'track', "mapmatched", "type", "timestamp", "length"])
     dx.to_csv(file_path, index=False, mode="w", sep=';', quoting=csv.QUOTE_NONE)
 
 row = 0
@@ -135,10 +137,10 @@ if "LONGITUDE E/W" in df.columns:
 print(f"Generating geojsons for {len(grouped)} tracks into {dbName}_track.csv...")
 for id, values in grouped:
     trajectory_length = haversine_vectorized(np.array(values['latitude']), np.array(values['longitude']))
-    tracks.append([id, str(geojson.Feature(geometry=geojson.LineString(values[["longitude", "latitude"]].values.tolist()))), type, timestamp, trajectory_length])
+    tracks.append([id, str(geojson.Feature(geometry=geojson.LineString(values[["longitude", "latitude"]].values.tolist()))), mapmatched, type, timestamp, trajectory_length])
     row += 1
     if row > 10000:
-        dx = pd.DataFrame(tracks, columns=['route', 'track', 'mapmatched', 'timestamp', "length"])
+        dx = pd.DataFrame(tracks, columns=['route', 'track', 'mapmatched', "type", 'timestamp', "length"])
         dx.to_csv("/home/data/import/files/" + dbName + "_track.csv", header=False, index=False, sep=';',
                   quoting=csv.QUOTE_NONE, mode="a")
         row = 0
@@ -147,7 +149,7 @@ for id, values in grouped:
         print(str(total * 10) + "k tracks done...")
 
 # Write the final batch of tracks
-dx = pd.DataFrame(tracks, columns=['route', 'track', 'mapmatched', 'timestamp', "length"])
+dx = pd.DataFrame(tracks, columns=['route', 'track', 'mapmatched', "type", 'timestamp', "length"])
 dx.to_csv(file_path, header=False, index=False, sep=';', quoting=csv.QUOTE_NONE, mode="a")
 
 print("GeoJSON track generation complete.")
@@ -194,6 +196,7 @@ mycursor.execute("""
         `hash` varchar(7) NOT NULL,
         `track` varchar(80) NOT NULL,
         `mapmatched` varchar(80) NOT NULL,
+        `type` varchar(80) NOT NULL,
         `timestamp` TIMESTAMP NOT NULL,
         `length` FLOAT NOT NULL,
         PRIMARY KEY (`id`),
@@ -208,6 +211,7 @@ mycursor.execute("""
         `route` varchar(250) NOT NULL,
         `track` mediumtext NOT NULL,
         `mapmatched` varchar(80) NOT NULL,
+        `type` varchar(80) NOT NULL,
         `timestamp` TIMESTAMP NOT NULL,
          `length` FLOAT NOT NULL,
         PRIMARY KEY (`route`)
@@ -223,7 +227,7 @@ try:
     mycursor.execute(f"""
         LOAD DATA LOCAL INFILE '/home/data/import/files/{dbName}_path.csv'
         INTO TABLE `path`
-        FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES (`hash`, `track`, `mapmatched`, `timestamp`, `length`);
+        FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES (`hash`, `track`, `mapmatched`, `type` , `timestamp`, `length`);
     """)
 except mysql.connector.Error as err:
     print(f"Error loading path data: {err}")
@@ -234,7 +238,7 @@ try:
     mycursor.execute(f"""
         LOAD DATA LOCAL INFILE '/home/data/import/files/{dbName}_track.csv'
         INTO TABLE `tracks`
-        FIELDS TERMINATED BY ';' LINES TERMINATED BY '\n' IGNORE 1 LINES (`route`, `track`, `mapmatched`, `timestamp`, `length`);
+        FIELDS TERMINATED BY ';' LINES TERMINATED BY '\n' IGNORE 1 LINES (`route`, `track`, `mapmatched`, `type` , `timestamp`, `length`);
     """)
 except mysql.connector.Error as err:
     print(f"Error loading track data: {err}")

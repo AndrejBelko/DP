@@ -1168,7 +1168,7 @@ unset($db);
         match_count = 0;
 
         for (var i in gdata) {
-            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;' onclick=\"showTrack1(" + i + ")\"></div></td><td><div onclick=\"showTrack1(" + i + ")\"><h6><b>" + gdata[i][3] + "</b></h6>Mapmatched: <b>" + gdata[i][2] + "</b><br> Length: <b>" + gdata[i][4] + " m</div></td></tr>";
+            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;' onclick=\"showTrack1(" + i + ")\"></div></td><td><div onclick=\"showTrack1(" + i + ")\"><h6><b>" + gdata[i][4] + "</b></h6>Mapmatched: <b>" + gdata[i][2] + "</b><br>Type: <b>" + gdata[i][3] + "</b><br> Length: <b>" + gdata[i][5] + " m</div></td></tr>";
         }
 
         $("#totalfound").html(gdata.length);

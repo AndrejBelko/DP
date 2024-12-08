@@ -55,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $csv_name = pathinfo($name, PATHINFO_FILENAME) . '.csv';
                 $csv_file = $uploads_dir . $csv_name;  // Set the CSV output path with same name
 
-                echo $csv_file;
                 // Call the Python script to convert GPX to CSV
                 $command = escapeshellcmd("python3 gpx_to_csv.py $gpx_file $csv_file");
                 shell_exec($command);
@@ -86,12 +85,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $stmt->execute();
 
                 $username = $_SESSION['username'];
+                $type = isset($_POST['trajectoryType']) ? 'Drive' : 'Walk';
 
-                $command = escapeshellcmd("python3 track_to_database.py $csv_file $username 0 $username" . " dataset" );
+                $command = escapeshellcmd("python3 track_to_database.py $csv_file $username 0 $type $username" . " dataset" );
 
                 $output = shell_exec($command . " 2>&1");
-                echo $output;
-
 
                 $command = escapeshellcmd("python3 geohash_area.py ". $username);
                 exec($command, $output, $return_var);
@@ -102,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 //                $walk = $_POST['type'];
 
                 $params = [
-                    'type' => 'Walk',
+                    'type' => $type,
                     'gps_accuracy' => "5", // Ensure $gpsAccuracy is defined
                     'search_radius' => "50", // Ensure $searchRadius is defined
                     'turn_penalty_factor' => "200" // Ensure $turnPenalty is defined
@@ -238,6 +236,7 @@ unset($db);
                     <tr>
                         <th>ID</th>
                         <th>Timestamp</th>
+                        <th>Type</th>
                         <th>Original</th>
                         <th>Mapmatched</th>
                     </tr>
@@ -251,6 +250,13 @@ unset($db);
                                 echo "<tr>";
                                 echo "<td>" . $row_tmp['route'] . "</td>";
                                 echo "<td>" . $row_tmp['timestamp'] . "</td>";
+                                if ($row_tmp['type'] === 'Walk') {
+                                    echo "<td>" . '<i class="bi bi-person"></i>' . "</td>"; // Bootstrap person icon
+                                } elseif ($row_tmp['type'] === 'Drive') {
+                                    echo "<td>" . '<i class="bi bi-car-front"></i>' . "</td>"; // Bootstrap car icon
+                                } else {
+                                    echo $row_tmp['type']; // Fallback for other types
+                                }
                                 echo "<td>
             <a href='delete.php?route=" . urlencode($row_tmp['route']) . "' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
             <a href='download.php?route=" . urlencode($row_tmp['route']) . "' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
@@ -290,6 +296,18 @@ unset($db);
                             <div class="form-group">
                                 <input style="width: 250px;" type="file" name="files" multiple class="form-control">
                             </div>
+                            <div class="form-group mb-3 d-flex align-items-center">
+                                <label for="trajectoryType" class="form-label me-3">Typ Trajektórie</label>
+                                <div class="form-check form-switch">
+                                    <input
+                                            class="form-check-input"
+                                            type="checkbox"
+                                            id="trajectoryType"
+                                            name="trajectoryType"
+                                            value="walk">
+                                    <label class="form-check-label" for="trajectoryType">Car Ride</label>
+                                </div>
+                            </div>
                             <button type="submit" name="submit" class="btn btn-primary">Nahraj</button>
                         </form>
 
@@ -302,6 +320,18 @@ unset($db);
 
                             <div class="form-group">
                                 <input style="width: 250px;" type="file" name="trexfiles" multiple class="form-control">
+                            </div>
+                            <div class="form-group mb-3 d-flex align-items-center">
+                                <label for="trajectoryType" class="form-label me-3">Typ Trajektórie</label>
+                                <div class="form-check form-switch">
+                                    <input
+                                            class="form-check-input"
+                                            type="checkbox"
+                                            id="trajectoryType"
+                                            name="trajectoryType"
+                                            value="walk">
+                                    <label class="form-check-label" for="trajectoryType">Car Ride</label>
+                                </div>
                             </div>
                             <button type="submit" name="trexsubmit" class="btn btn-primary">Nahraj</button>
                         </form>

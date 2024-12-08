@@ -14,9 +14,9 @@ def runQuery(dbName, type):
     mycursor = mydb.cursor()
 
     mycursor.execute(
-        f"select route as id, track, mapmatched, timestamp, length from tracks where mapmatched = {type};"
+        f"select route as id, track, mapmatched, type, timestamp, length from tracks where mapmatched = {type};"
     )
-    routes = pd.DataFrame(mycursor.fetchall(), columns=['id', 'route','mapmatched','timestamp','length'])
+    routes = pd.DataFrame(mycursor.fetchall(), columns=['id', 'route','mapmatched', 'type', 'timestamp','length'])
     mycursor.close()
     mydb.disconnect()
 

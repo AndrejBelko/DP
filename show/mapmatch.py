@@ -178,4 +178,4 @@ def folder_process(params):
 
 params = json.loads(sys.argv[1])
 path = folder_process(params)
-subprocess.run(["python3", "track_to_database.py", path, params['username'], '1', params['username']])
+subprocess.run(["python3", "track_to_database.py", path, params['username'], '1', params['parameters']['type'], params['username']])
