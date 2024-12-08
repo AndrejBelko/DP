@@ -350,22 +350,21 @@ unset($db);
     </footer>
 </div>
 
-
 <div class="container" id="sidebarRight">
     <div class="row">
-        <div class="col-lg-12">
-            <a class="close" onclick="sidebarRight.hide()">x</a>
+        <div class="col-12">
+            <a class="btn-close float-end" onclick="sidebarRight.hide()"></a>
         </div>
-    </div>
-    <div class="row">
-        <div class="col-lg-12" id="chartContainer" style="height: 300px; width: 90%; margin-top: 5%;"></div>
-    </div>
-    <div class="row">
-        <div class="col-lg-12" id="chart2Container" style="height: 300px; width: 90%; margin-top: 5%;"></div>
-    </div>
-    <div style="position: relative; bottom: 0%; margin-top:10%">
-        <div class="col-lg-12">
-            <h1 style="font-size: 18px;">Click on individual columns to show or hide selected values on the map</h1>
+        <div class="row">
+            <div class="col-lg-12" id="chartContainer" style="height: 300px; width: 90%; margin-top: 5%;"></div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12" id="chart2Container" style="height: 300px; width: 90%; margin-top: 5%;"></div>
+        </div>
+        <div style="position: relative; bottom: 0%; margin-top:10%">
+            <div class="col-lg-12">
+                <h1 style="font-size: 18px;">Click on individual columns to show or hide selected values on the map</h1>
+            </div>
         </div>
     </div>
 </div>
@@ -1209,6 +1208,7 @@ unset($db);
 
     showAllPaths();
 
+</script>
 </script>
 <script src="js/jquery.tablesorter.min.js"></script>
 <link rel="stylesheet" href="css/theme.blue.css"/>

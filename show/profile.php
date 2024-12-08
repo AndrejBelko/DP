@@ -1,5 +1,7 @@
 <?php
 
+#ngrok.com presmerovanie localhostu
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -25,10 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $uploads_dir = '/home/data/import/uploads/';
         if (isset($_FILES['files'])){
             $tmp_name = $_FILES["files"]["tmp_name"];
-            $name = basename($_FILES["files"]["name"]);
+            $name = strtolower(basename($_FILES["files"]["name"]));
         } else{
             $tmp_name = $_FILES["trexfiles"]["tmp_name"];
-            $name = basename($_FILES["trexfiles"]["name"]);
+            $name = strtolower(basename($_FILES["trexfiles"]["name"]));
         }
 
         // Ensure the directory exists
