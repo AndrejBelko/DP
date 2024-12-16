@@ -25,113 +25,116 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Check if file was uploaded
     if (isset($_FILES['files']) || isset($_FILES['trexfiles'])) {
         $uploads_dir = '/home/data/import/uploads/';
-        if (isset($_FILES['files'])){
-            $tmp_name = $_FILES["files"]["tmp_name"];
-            $name = strtolower(basename($_FILES["files"]["name"]));
-        } else{
-            $tmp_name = $_FILES["trexfiles"]["tmp_name"];
-            $name = strtolower(basename($_FILES["trexfiles"]["name"]));
-        }
+        $input_files = $_FILES['files'] ?? $_FILES['trexfiles'];
+
+        $tmp_names = $input_files['tmp_name'];
+        $names = array_map(function ($name) {
+            return strtolower(basename($name));
+        }, $input_files['name']);
 
         // Ensure the directory exists
         if (!is_dir($uploads_dir)) {
             mkdir($uploads_dir, 0777, true);  // Create directory if not exists with proper permissions
         }
 
-        if (isset($_FILES['trexfiles']) && pathinfo($name, PATHINFO_EXTENSION) != 'gpx'){
-            echo "Please upload a valid GPX file.";
-            exit;
-        } else if(isset($_FILES['files']) && strtolower(pathinfo($name, PATHINFO_EXTENSION)) != 'csv'){
-            echo "Please upload a valid csv file.";
-            exit;
-        }
-
-        // Store the uploaded GPX file in the target directory
-        $gpx_file = $uploads_dir . $name;
-        if (move_uploaded_file($tmp_name, $gpx_file)) {
-
-            if (isset($_FILES['trexfiles'])){
-                // Create CSV file name by replacing .gpx with .csv
-                $csv_name = pathinfo($name, PATHINFO_FILENAME) . '.csv';
-                $csv_file = $uploads_dir . $csv_name;  // Set the CSV output path with same name
-
-                // Call the Python script to convert GPX to CSV
-                $command = escapeshellcmd("python3 gpx_to_csv.py $gpx_file $csv_file");
-                shell_exec($command);
-            } else{
-                // Create CSV file name by replacing .gpx with .csv
-                $csv_name = pathinfo($name, PATHINFO_FILENAME) . '.csv';
-                $csv_file = $uploads_dir . $csv_name;  // Set the CSV output path with same name
+        for ($x = 0; $x < sizeof($names); $x++) {
+            $name = $names[$x];
+            $tmp_name = $tmp_names[$x];
+            if (isset($_FILES['trexfiles']) && pathinfo($name, PATHINFO_EXTENSION) != 'gpx') {
+                echo "Please upload a valid GPX file.";
+                exit;
+            } else if (isset($_FILES['files']) && strtolower(pathinfo($name, PATHINFO_EXTENSION)) != 'csv') {
+                echo "Please upload a valid csv file.";
+                exit;
             }
 
+            // Store the uploaded GPX file in the target directory
+            $gpx_file = $uploads_dir . $name;
+            if (move_uploaded_file($tmp_name, $gpx_file)) {
 
-            // Check if the CSV file was generated
-            if (file_exists($csv_file)) {
+                if (isset($_FILES['trexfiles'])) {
+                    // Create CSV file name by replacing .gpx with .csv
+                    $csv_name = pathinfo($name, PATHINFO_FILENAME) . '.csv';
+                    $csv_file = $uploads_dir . $csv_name;  // Set the CSV output path with same name
 
-                // Insert file information into the database
-                $sql = "SELECT id FROM pouzivatel WHERE meno = :username";
-                $stmt = $db->prepare($sql);
-                $stmt->bindParam(":username", $_SESSION["username"], PDO::PARAM_STR);
-                $stmt->execute();
-                $row = $stmt->fetch();
-                $pouzivatel_id = $row["id"];
+                    // Call the Python script to convert GPX to CSV
+                    $command = escapeshellcmd("python3 gpx_to_csv.py $gpx_file $csv_file");
+                    shell_exec($command);
+                } else {
+                    // Create CSV file name by replacing .gpx with .csv
+                    $csv_name = pathinfo($name, PATHINFO_FILENAME) . '.csv';
+                    $csv_file = $uploads_dir . $csv_name;  // Set the CSV output path with same name
+                }
 
-                $sql = "INSERT INTO subor (pouzivatel_id, nazov, cesta) VALUES (:pouzivatel_id, :nazov, :cesta)";
-                $stmt = $db->prepare($sql);
-                $stmt->bindParam(":pouzivatel_id", $pouzivatel_id, PDO::PARAM_INT);
-                $stmt->bindParam(":nazov", $csv_name, PDO::PARAM_STR);  // Save the CSV file name
-                $stmt->bindParam(":cesta", $csv_file, PDO::PARAM_STR);  // Store the CSV file path
 
-                $stmt->execute();
+                // Check if the CSV file was generated
+                if (file_exists($csv_file)) {
 
-                $username = $_SESSION['username'];
-                $type = isset($_POST['trajectoryType']) ? 'Drive' : 'Walk';
+                    // Insert file information into the database
+                    $sql = "SELECT id FROM pouzivatel WHERE meno = :username";
+                    $stmt = $db->prepare($sql);
+                    $stmt->bindParam(":username", $_SESSION["username"], PDO::PARAM_STR);
+                    $stmt->execute();
+                    $row = $stmt->fetch();
+                    $pouzivatel_id = $row["id"];
 
-                $command = escapeshellcmd("python3 track_to_database.py $csv_file $username 0 $type $username" . " dataset" );
+                    $sql = "INSERT INTO subor (pouzivatel_id, nazov, cesta) VALUES (:pouzivatel_id, :nazov, :cesta)";
+                    $stmt = $db->prepare($sql);
+                    $stmt->bindParam(":pouzivatel_id", $pouzivatel_id, PDO::PARAM_INT);
+                    $stmt->bindParam(":nazov", $csv_name, PDO::PARAM_STR);  // Save the CSV file name
+                    $stmt->bindParam(":cesta", $csv_file, PDO::PARAM_STR);  // Store the CSV file path
 
-                $output = shell_exec($command . " 2>&1");
+                    $stmt->execute();
 
-                $command = escapeshellcmd("python3 geohash_area.py ". $username);
-                exec($command, $output, $return_var);
+                    $username = $_SESSION['username'];
+                    $type = isset($_POST['trajectoryType']) ? 'Drive' : 'Walk';
+
+                    $command = escapeshellcmd("python3 track_to_database.py $csv_file $username 0 $type $username" . " dataset");
+
+                    $output = shell_exec($command . " 2>&1");
+
+                    $command = escapeshellcmd("python3 geohash_area.py " . $username);
+                    exec($command, $output, $return_var);
 
 //                $gpsAccuracy = $_POST['gps_accuracy'];
 //                $searchRadius = $_POST['search_radius'];
 //                $turnPenalty = $_POST['turn_penalty_factor'];
 //                $walk = $_POST['type'];
 
-                $params = [
-                    'type' => $type,
-                    'gps_accuracy' => "5", // Ensure $gpsAccuracy is defined
-                    'search_radius' => "50", // Ensure $searchRadius is defined
-                    'turn_penalty_factor' => "200" // Ensure $turnPenalty is defined
-                ];
+                    $params = [
+                        'type' => $type,
+                        'gps_accuracy' => "5", // Ensure $gpsAccuracy is defined
+                        'search_radius' => "50", // Ensure $searchRadius is defined
+                        'turn_penalty_factor' => "200" // Ensure $turnPenalty is defined
+                    ];
 
-                // Convert the parameters array to JSON
-                $parametersJson = json_encode($params, JSON_PRETTY_PRINT);
+                    // Convert the parameters array to JSON
+                    $parametersJson = json_encode($params, JSON_PRETTY_PRINT);
 
-                // Define the input array for the container request
-                $input = [
-                    'container' => "valhalla", // Container name
-                    'username' => $username, // Ensure $username is defined
-                    'parameters' => json_decode($parametersJson), // Decode back to array to ensure it's properly structured
-                    'file' => $gpx_file // Ensure $gpx_file is defined
-                ];
+                    // Define the input array for the container request
+                    $input = [
+                        'container' => "valhalla", // Container name
+                        'username' => $username, // Ensure $username is defined
+                        'parameters' => json_decode($parametersJson), // Decode back to array to ensure it's properly structured
+                        'file' => $gpx_file // Ensure $gpx_file is defined
+                    ];
 
-                // Convert the input array to JSON
-                $jsonInput = json_encode($input, JSON_PRETTY_PRINT);
+                    // Convert the input array to JSON
+                    $jsonInput = json_encode($input, JSON_PRETTY_PRINT);
 
-                $nodeScript = "node /var/www/html/upload.js '$jsonInput'"; // Pass the uploaded file path to Node.js script
+                    $nodeScript = "node /var/www/html/upload.js '$jsonInput'"; // Pass the uploaded file path to Node.js script
 
-                // Execute the Node.js script
-                exec($nodeScript, $output, $return_var);
+                    // Execute the Node.js script
+                    exec($nodeScript, $output, $return_var);
 
-                // Check if JSON encoding was successful
+                    // Check if JSON encoding was successful
 
+                } else {
+                    echo "Error: CSV file not generated.<br>";
+                }
             } else {
-                echo "Error: CSV file not generated.<br>";
+                echo "Failed to move the uploaded file.<br>";
             }
-        } else {
-            echo "Failed to move the uploaded file.<br>";
         }
     } else {
         echo "No file uploaded or an error occurred.<br>";
@@ -294,7 +297,7 @@ unset($db);
                                        value="<?php echo date('Y-m'); ?>">
                             </div>
                             <div class="form-group">
-                                <input style="width: 250px;" type="file" name="files" multiple class="form-control">
+                                <input style="width: 250px;" type="file" name="files[]" multiple class="form-control">
                             </div>
                             <div class="form-group mb-3 d-flex align-items-center">
                                 <label for="trajectoryType" class="form-label me-3">Typ Trajektórie</label>
@@ -319,7 +322,7 @@ unset($db);
                         <form action="profile.php" method="post" enctype="multipart/form-data">
 
                             <div class="form-group">
-                                <input style="width: 250px;" type="file" name="trexfiles" multiple class="form-control">
+                                <input style="width: 250px;" type="file" name="trexfiles[]" multiple class="form-control">
                             </div>
                             <div class="form-group mb-3 d-flex align-items-center">
                                 <label for="trajectoryType" class="form-label me-3">Typ Trajektórie</label>
