@@ -969,7 +969,7 @@ unset($db);
 
         $.ajax({
             method: "POST",
-            url: "geohash_py.php",
+            url: "php/geohash_py.php",
             dataType: "json",
             data: {
                 "dbName": queryDB,
@@ -1053,7 +1053,7 @@ unset($db);
         if (queryDB !== " ") {
             $.ajax({
                 method: "POST",
-                url: "show_all_tracks.php",
+                url: "php/show_all_tracks.php",
                 dataType: "json",
                 data: {
                     "dbName": queryDB,
