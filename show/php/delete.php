@@ -48,17 +48,17 @@ if (isset($_GET['route'])) {
         $stmt->bindParam(':track', $secondaryRoute, PDO::PARAM_INT);
         $stmt->execute();
 
-        $filePath1 = '/home/data/import/files/' . $username1 . '_track.csv';
+        $filePath1 = '/home/data/import/files/db/'. $username1 . '/' . $username1 . '_track.csv';
         deleteCSV($filePath1);
         createCSV($filePath1,$db, "tracks");
 
-        $filePath2 = '/home/data/import/files/' . $username1 . '_path.csv';
+        $filePath2 = '/home/data/import/files/db/' . $username1 . '/' . $username1 . '_path.csv';
         deleteCSV($filePath2);
         createCSV($filePath2,$db, "path");
 
         // Execute external Python script
         if (file_exists($filePath2)){
-            $command = escapeshellcmd("python3 geohash_area.py " . $username1);
+            $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username1);
             exec($command, $output, $return_var);
         } else{
             unlink('/var/www/html/coverage/'.$username1.'.geojson');

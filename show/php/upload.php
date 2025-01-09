@@ -64,10 +64,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $row = $stmt->fetch();
 
-        $command = "python3 track_to_database.py $target_file $username 0 $username" . " dataset 2>&1";
+        $command = "python3 /var/www/html/track_to_database.py $target_file $username 0 $username" . " dataset 2>&1";
         exec($command, $output, $return_var);
 
-        $command = escapeshellcmd("python3 geohash_area.py " . $username);
+        $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
         exec($command, $output, $return_var);
 
 //    $gpsAccuracy = $_POST['gps_accuracy'];
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Convert the input array to JSON
         $jsonInput = json_encode($input, JSON_PRETTY_PRINT);
 
-        $nodeScript = "node /var/www/html/upload.js '$jsonInput'"; // Pass the uploaded file path to Node.js script
+        $nodeScript = "node /var/www/html/js/upload.js '$jsonInput'"; // Pass the uploaded file path to Node.js script
 
         // Execute the Node.js script
         exec($nodeScript, $output, $return_var);

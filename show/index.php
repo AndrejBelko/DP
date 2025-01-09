@@ -3,7 +3,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 error_reporting(E_WARNING);
-require_once('config.php');
+require_once('php/config.php');
 session_start();
 
 try {
@@ -226,7 +226,7 @@ unset($db);
                         <a class="nav-link active fs-5" aria-current="page" href="index.php">Mapa</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link fs-5" href="profile.php">Profil</a>
+                        <a class="nav-link fs-5" href="php/profile.php">Profil</a>
                     </li>
                     <!--                    <li class="nav-item">-->
                     <!--                        <a class="nav-link fs-5" href="upload.php">Nahranie nových trajektórií</a>-->
@@ -236,14 +236,14 @@ unset($db);
                     <!--                    </li>-->
                     <?php if (isset($_SESSION['username']) && $_SESSION['loggedin'] === true): ?>
                         <li class="nav-item">
-                            <a class="nav-link fs-5" href="logout.php">Odhlásiť sa</a>
+                            <a class="nav-link fs-5" href="php/logout.php">Odhlásiť sa</a>
                         </li>
                     <?php else: ?>
                         <li class="nav-item">
-                            <a class="nav-link fs-5" href="register.php">Registrovať sa</a>
+                            <a class="nav-link fs-5" href="php/register.php">Registrovať sa</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link fs-5" href="login.php">Prihlásiť sa</a>
+                            <a class="nav-link fs-5" href="php/login.php">Prihlásiť sa</a>
                         </li>
                     <?php endif; ?>
                 </ul>
@@ -344,8 +344,8 @@ unset($db);
             }
             ?>
             <p class="small">Algorithm &copy; <a href="https://mcomputing.eu" class="text-decoration-none">mcomputing.eu</a></p>
-            <a href="nwa.php" class="text-decoration-none">Needleman–Wunsch</a> |
-            <a href="swa.php" class="text-decoration-none">Smith–Waterman</a>
+            <a href="php/nwa.php" class="text-decoration-none">Needleman–Wunsch</a> |
+            <a href="php/swa.php" class="text-decoration-none">Smith–Waterman</a>
         </div>
     </footer>
 </div>
@@ -514,6 +514,8 @@ unset($db);
 
     L.easyButton('fa-repeat', function (btn, map) {
         clearSearch();
+        // location.reload();
+        showAllPaths()
     }).addTo(map);
 
     L.easyButton('fa-list', function (btn, map) {

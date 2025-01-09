@@ -24,7 +24,7 @@ if (!isset($_SESSION["username"]) || $_SESSION["loggedin"] !== true) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Check if file was uploaded
     if (isset($_FILES['files']) || isset($_FILES['trexfiles'])) {
-        $uploads_dir = '/home/data/import/uploads/';
+        $uploads_dir = '/home/data/import/files/uploads/' . $_SESSION["username"] . "/";
         $input_files = $_FILES['files'] ?? $_FILES['trexfiles'];
 
         $tmp_names = $input_files['tmp_name'];
@@ -38,31 +38,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         for ($x = 0; $x < sizeof($names); $x++) {
-            $name = $names[$x];
+            $filename = $names[$x];
             $tmp_name = $tmp_names[$x];
-            if (isset($_FILES['trexfiles']) && pathinfo($name, PATHINFO_EXTENSION) != 'gpx') {
+            if (isset($_FILES['trexfiles']) && pathinfo($filename, PATHINFO_EXTENSION) != 'gpx') {
                 echo "Please upload a valid GPX file.";
                 exit;
-            } else if (isset($_FILES['files']) && strtolower(pathinfo($name, PATHINFO_EXTENSION)) != 'csv') {
+            } else if (isset($_FILES['files']) && strtolower(pathinfo($filename, PATHINFO_EXTENSION)) != 'csv') {
                 echo "Please upload a valid csv file.";
                 exit;
             }
 
             // Store the uploaded GPX file in the target directory
-            $gpx_file = $uploads_dir . $name;
+            $gpx_file = $uploads_dir . $filename;
             if (move_uploaded_file($tmp_name, $gpx_file)) {
 
                 if (isset($_FILES['trexfiles'])) {
                     // Create CSV file name by replacing .gpx with .csv
-                    $csv_name = pathinfo($name, PATHINFO_FILENAME) . '.csv';
+                    $csv_name = pathinfo($filename, PATHINFO_FILENAME) . '.csv';
                     $csv_file = $uploads_dir . $csv_name;  // Set the CSV output path with same name
 
                     // Call the Python script to convert GPX to CSV
-                    $command = escapeshellcmd("python3 gpx_to_csv.py $gpx_file $csv_file");
+                    $command = escapeshellcmd("python3 /var/www/html/gpx_to_csv.py $gpx_file $csv_file");
                     shell_exec($command);
                 } else {
                     // Create CSV file name by replacing .gpx with .csv
-                    $csv_name = pathinfo($name, PATHINFO_FILENAME) . '.csv';
+                    $csv_name = pathinfo($filename, PATHINFO_FILENAME) . '.csv';
                     $csv_file = $uploads_dir . $csv_name;  // Set the CSV output path with same name
                 }
 
@@ -89,11 +89,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $username = $_SESSION['username'];
                     $type = isset($_POST['trajectoryType']) ? 'Drive' : 'Walk';
 
-                    $command = escapeshellcmd("python3 track_to_database.py $csv_file $username 0 $type $username" . " dataset");
+                    $command = escapeshellcmd("python3 /var/www/html/track_to_database.py $filename $csv_file $username 0 $type $username" . " dataset");
 
                     $output = shell_exec($command . " 2>&1");
+                    echo $output;
 
-                    $command = escapeshellcmd("python3 geohash_area.py " . $username);
+                    $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
                     exec($command, $output, $return_var);
 
 //                $gpsAccuracy = $_POST['gps_accuracy'];
@@ -116,16 +117,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         'container' => "valhalla", // Container name
                         'username' => $username, // Ensure $username is defined
                         'parameters' => json_decode($parametersJson), // Decode back to array to ensure it's properly structured
-                        'file' => $gpx_file // Ensure $gpx_file is defined
+                        'file' => $gpx_file, // Ensure $gpx_file is defined
+                        'filename' => $filename
                     ];
 
                     // Convert the input array to JSON
                     $jsonInput = json_encode($input, JSON_PRETTY_PRINT);
 
-                    $nodeScript = "node /var/www/html/upload.js '$jsonInput'"; // Pass the uploaded file path to Node.js script
+                    $nodeScript = "node /var/www/html/js/upload.js '$jsonInput'"; // Pass the uploaded file path to Node.js script
 
                     // Execute the Node.js script
                     exec($nodeScript, $output, $return_var);
+
+                    echo $output;
 
                     // Check if JSON encoding was successful
 
@@ -176,18 +180,83 @@ unset($db);
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Profile</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+          integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+          crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""></script>
 
 
     <link href="https://netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
     <script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
     <script src="https://npmcdn.com/leaflet-geometryutil"></script>
-    <script src="js/geohash.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <script src="../js/geohash.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="../js/core.js"></script>
+    <script src="../js/charts.js"></script>
+    <script src="../js/animated.js"></script>
 
+    <style>
+
+        .row {
+            padding-top: 20px;
+        }
+
+        #map {
+            min-height: 400px;
+            height: 60%;
+            max-width: 100%;
+        }
+
+        .chartdiv {
+            width: 100%;
+            height: 400px;
+        }
+
+        #datacol {
+            height: 90vh; /* 100% of the viewport height */
+            overflow-y: auto; /* Enables vertical scrolling */
+        }
+
+        @media (max-width: 768px) {
+            .table-wrapper {
+                transform: scale(0.8); /* Scale down to 80% */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .table-wrapper {
+                transform: scale(0.6); /* Scale down to 60% */
+            }
+        }
+
+        #upload-hodinky, #upload-trex, .table-wrapper {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%; /* Ensures the centering spans the full width */
+            margin: 0 auto; /* Center the container itself horizontally if needed */
+        }
+
+        form {
+            display: flex;
+            flex-direction: column; /* Stack elements vertically */
+            align-items: center; /* Center elements horizontally */
+            gap: 10px; /* Add spacing between child elements */
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center; /* Align checkbox and label vertically */
+            gap: 5px; /* Add spacing between the checkbox and label */
+        }
+
+    </style>
 </head>
 
 <body>
@@ -203,18 +272,18 @@ unset($db);
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link active fs-5" aria-current="page" href="index.php">Mapa</a>
+                        <a class="nav-link active fs-5" aria-current="page" href="../index.php">Mapa</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link fs-5" href="profile.php">
                             Profil
                         </a>
                     </li>
-<!--                    <li class="nav-item">-->
-<!--                        <a class="nav-link fs-5" href="pdf.php">-->
-<!--                            Príručka-->
-<!--                        </a>-->
-<!--                    </li>-->
+                    <!--                    <li class="nav-item">-->
+                    <!--                        <a class="nav-link fs-5" href="pdf.php">-->
+                    <!--                            Príručka-->
+                    <!--                        </a>-->
+                    <!--                    </li>-->
                     <li class="nav-item">
                         <a class="nav-link fs-5" href="logout.php">
                             Odhlásiť sa
@@ -230,28 +299,82 @@ unset($db);
         </div>
     </nav>
 </header>
+<div class="container mt-5">
+    <div class="row text-center justify-content-center">
+        <div class="col-md-6">
+            <button class="mt-4 mb-3 btn btn-primary btn-sm btn-collapse" onclick="showElement('upload-hodinky')"><strong>Nahraj udaje z hodiniek
+                        (.csv)</strong>
+            </button>
+            <div style="display: none" id="upload-hodinky" class="text-center justify-content-center">
+                <form action="profile.php" method="post" enctype="multipart/form-data">
+                    <input style="width: 250px;" type="file" name="files[]" multiple class="form-control">
+                    <div class="form-group mb-3 d-flex align-items-center">
+                        <label for="trajectoryType" class="form-label me-3">Typ Trajektórie</label>
+                        <div class="form-check form-switch">
+                            <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    id="trajectoryType"
+                                    name="trajectoryType"
+                                    value="walk">
+                            <label class="form-check-label" for="trajectoryType">Car Ride</label>
+                        </div>
+                    </div>
+                    <button type="submit" name="submit" class="btn btn-primary">Nahraj</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-6 text-center justify-content-center">
+            <button class="mt-4 btn btn-primary btn-sm" onclick="showElement('upload-trex')"><strong>Nahraj udaje z T-REXu
+                        (.gpx)</strong>
+            </button>
+            <div style="display: none" id="upload-trex" class="text-center justify-content-center">
+                <form action="profile.php" method="post" enctype="multipart/form-data">
+
+                    <div class="form-group">
+                        <input style="width: 250px;" type="file" name="trexfiles[]" multiple class="form-control">
+                    </div>
+                    <div class="form-group mb-3 d-flex align-items-center">
+                        <label for="trajectoryType" class="form-label me-3">Typ Trajektórie</label>
+                        <div class="form-check form-switch">
+                            <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    id="trajectoryType"
+                                    name="trajectoryType"
+                                    value="walk">
+                            <label class="form-check-label" for="trajectoryType">Car Ride</label>
+                        </div>
+                    </div>
+                    <button type="submit" name="trexsubmit" class="btn btn-primary">Nahraj</button>
+                </form>
+            </div>
+        </div>
+    </div>
     <div class="container mt-5">
         <div class="row">
-            <!-- Left Column: Table -->
-            <div class="col-md-8">
-                <table class="table table-striped table-bordered">
-                    <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Timestamp</th>
-                        <th>Type</th>
-                        <th>Original</th>
-                        <th>Mapmatched</th>
-                    </tr>
-                    </thead>
-                    <tbody>
+            <div class="col-12 col-md-10 mx-auto">
+                <div class="table-wrapper">
+                    <table class="table table-striped table-bordered">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Filename</th>
+                            <th>Timestamp</th>
+                            <th>Type</th>
+                            <th>Original</th>
+                            <th>Mapmatched</th>
+                            <th>Info</th>
+                        </tr>
+                        </thead>
+                        <tbody>
                         <?php
-
-                        if (!$err){
+                        if (!$err) {
                             for ($i = 0; $i < count($row); $i += 2) {
                                 $row_tmp = $row[$i]; // Access every second element
                                 echo "<tr>";
                                 echo "<td>" . $row_tmp['route'] . "</td>";
+                                echo "<td>" . $row_tmp['filename'] . "</td>";
                                 echo "<td>" . $row_tmp['timestamp'] . "</td>";
                                 if ($row_tmp['type'] === 'Walk') {
                                     echo "<td>" . '<i class="bi bi-person"></i>' . "</td>"; // Bootstrap person icon
@@ -274,83 +397,31 @@ unset($db);
                                 } else {
                                     echo "<td>—</td>"; // Placeholder if there is no `$i + 1`
                                 }
+                                echo "<td>
+                                <div class='btn btn-sm btn-info' onclick='loadGPSData(" . '"' . $row_tmp['filename'] . '"' . ")'><i class='bi bi-info'></i></div>
+                                </td>";
                                 echo "</tr>";
                             }
                         }
 
                         echo "</table>";
-
                         ?>
-                    </tbody>
-                </table>
-            </div>
-            <!-- Right Column: Links -->
-            <div class="col-md-4">
-                <div class="d-flex flex-column">
-                    <p class="mt-4"><a href="#" onclick="showElement('upload-hodinky')"><strong>Nahraj udaje z hodiniek</strong></a>
-                    </p>
-                    <div style="display: none" id="upload-hodinky">
-                        <form action="profile.php" method="post" enctype="multipart/form-data">
-                            <div class="form-group">
-                                <label>Zadaj Rok-Mesiac</label>
-                                <input style="width: 150px;" type="text" name="yearmonth" class="form-control"
-                                       value="<?php echo date('Y-m'); ?>">
-                            </div>
-                            <div class="form-group">
-                                <input style="width: 250px;" type="file" name="files[]" multiple class="form-control">
-                            </div>
-                            <div class="form-group mb-3 d-flex align-items-center">
-                                <label for="trajectoryType" class="form-label me-3">Typ Trajektórie</label>
-                                <div class="form-check form-switch">
-                                    <input
-                                            class="form-check-input"
-                                            type="checkbox"
-                                            id="trajectoryType"
-                                            name="trajectoryType"
-                                            value="walk">
-                                    <label class="form-check-label" for="trajectoryType">Car Ride</label>
-                                </div>
-                            </div>
-                            <button type="submit" name="submit" class="btn btn-primary">Nahraj</button>
-                        </form>
-
-                    </div>
-
-                    <p class="mt-4"><a href="#" onclick="showElement('upload-trex')"><strong>Nahraj udaje z T-REXu</strong></a>
-                    </p>
-                    <div style="display: none" id="upload-trex">
-                        <form action="profile.php" method="post" enctype="multipart/form-data">
-
-                            <div class="form-group">
-                                <input style="width: 250px;" type="file" name="trexfiles[]" multiple class="form-control">
-                            </div>
-                            <div class="form-group mb-3 d-flex align-items-center">
-                                <label for="trajectoryType" class="form-label me-3">Typ Trajektórie</label>
-                                <div class="form-check form-switch">
-                                    <input
-                                            class="form-check-input"
-                                            type="checkbox"
-                                            id="trajectoryType"
-                                            name="trajectoryType"
-                                            value="walk">
-                                    <label class="form-check-label" for="trajectoryType">Car Ride</label>
-                                </div>
-                            </div>
-                            <button type="submit" name="trexsubmit" class="btn btn-primary">Nahraj</button>
-                        </form>
-
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+        <div id="speedchart" class="chartdiv"></div>
+        <div id="heightchart" class="chartdiv"></div>
     </div>
+</div>
 
 <!-- Include Bootstrap JS (optional, for advanced interactions) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 <script>
-    function drawTrackScaledWithoutZoom(coordinates, svgWidth, svgHeight, i){
+    function drawTrackScaledWithoutZoom(coordinates, svgWidth, svgHeight, i) {
         // Find the minimum and maximum values for x and y coordinates.
         let minX = coordinates[0][0], maxX = coordinates[0][0];
         let minY = coordinates[0][1], maxY = coordinates[0][1];
@@ -395,13 +466,13 @@ unset($db);
         document.getElementById(divname).replaceChildren(svg);
     }
 
-    function showResults1(){
+    function showResults1() {
         var x = "";
-        for (var i in gdata){
-            x+= "<tr class='result-item' id='"+gdata[i][0]+"'><td><div id='mapArea"+i+"' style='width:80px;height:80px;' onclick=\"showTrack1("+i+")\"></div></td><td><div onclick=\"showTrack("+i+")\"><h5><b>"+gdata[i][0]+"</b></div></td></tr>";
+        for (var i in gdata) {
+            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;' onclick=\"showTrack1(" + i + ")\"></div></td><td><div onclick=\"showTrack(" + i + ")\"><h5><b>" + gdata[i][0] + "</b></div></td></tr>";
 
         }
-        for(i in gdata){
+        for (i in gdata) {
             drawTrackScaledWithoutZoom(JSON.parse(gdata[i][1]).geometry.coordinates, 80, 80, i);
         }
         // chart.options.data[0].dataPoints = dps;
@@ -420,23 +491,24 @@ unset($db);
 
 <script>
     function showElement(id) {
-        $("#trex-uploaded").hide()
-        $("#upload-trex").hide();
-        $("#upload-hodinky").hide();
-        //$("#upload-logger").hide();
-        $("#files-by-month").hide();
-        //$("#files-by-columbus").hide();
-        $("#files-by-year-month").hide();
-        $("#splited-hodinky").hide();
-
-        $("#" + id).show();
-    }
-
-    function showList(id) {
         $("#" + id).toggle();
     }
+
 </script>
 <script>
+
+    function loadGPSData(filename) {
+
+        fetch("load_data.php?file=" + encodeURIComponent(filename))
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                if (data.length > 0) {
+                    processData(data);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
 
     function parseSpeed(data) {
 
@@ -451,7 +523,6 @@ unset($db);
             return {"time": parseInt(line[2]) * 1000, "height": parseFloat(line[4])};
         });
     }
-
 
     function processData(jsonData) {
         drawChart("speedchart", parseSpeed(jsonData), "Rychlost [km/h]", "speed", "Rychlost ", " km/h");

@@ -102,7 +102,7 @@ def generate_geojson_from_components(R):
 
 db_name = sys.argv[1]
 print(db_name)
-path = f"/home/data/import/files/{db_name}_path.csv"
+path = f"/home/data/import/files/db/{db_name}/{db_name}_path.csv"
 print("finished")
 df = pd.read_csv(path)
 x = df['geohash'].unique()

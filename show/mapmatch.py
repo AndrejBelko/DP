@@ -5,10 +5,14 @@ import gpxpy
 import base64
 import subprocess
 import re
+import os
 
 ## Save map matched data to a csv file
 def create_file_for_db(data,track,user,type,name):
-    base_folder = "/home/data/import/files/mapmatched" # folder in which users routes will be stored
+    base_folder = f"/home/data/import/files/mapmatched/{user}" # folder in which users routes will be stored
+
+    if not os.path.isdir(base_folder):
+        os.makedirs(base_folder)
 
     file_path = path.join(base_folder, track + '.csv')
     file = open(file_path,'w')
@@ -178,4 +182,4 @@ def folder_process(params):
 
 params = json.loads(sys.argv[1])
 path = folder_process(params)
-subprocess.run(["python3", "track_to_database.py", path, params['username'], '1', params['parameters']['type'], params['username']])
+subprocess.run(["python3", "/var/www/html/track_to_database.py", params['filename'], path, params['username'], '1', params['parameters']['type'], params['username']])

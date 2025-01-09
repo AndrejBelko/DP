@@ -31,6 +31,8 @@ RUN pip3 install shapely
 RUN pip3 install IPython
 RUN npm install
 
+# create db, mapmatched, uploads dirs in data/import/files
+
 # BUILD IMAGE AND CREATE CONTAINER
 # docker build -t search .
 # docker run -dit -v C:\Users\maros\Documents\dockeer\mcomputing\search_web\show:/var/www/html/ -v C:\Users\maros\Documents\dockeer\mcomputing\search_web\data:/home/data --name search_gps -p 8090:80 search 

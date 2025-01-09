@@ -9,6 +9,7 @@ from datetime import datetime
 import json
 import subprocess
 import numpy as np
+import os
 
 def haversine_vectorized(latitudes, longitudes):
     R = 6371000  # Earth radius in meters
@@ -24,7 +25,7 @@ def haversine_vectorized(latitudes, longitudes):
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
     return np.sum(R * c)
 
-def csvToGeohash(csvPath, dbName, title):
+def csvToGeohash(csvPath, dbName, title, directory_path):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print("reading dataset ...")
     df = pd.read_csv(csvPath)
@@ -38,7 +39,9 @@ def csvToGeohash(csvPath, dbName, title):
     track_col = df.columns.get_loc("track")
     geohash = []
     dx = pd.DataFrame(geohash, columns=["geohash","track", "mapmatched", "timestamp", "length"])
-    dx.to_csv("/home/data/import/files/"+dbName+"_path.csv", index=False, mode="w")
+    if not os.path.isdir(directory_path):
+            os.makedirs(directory_path)
+    dx.to_csv(f"{directory_path}/{dbName}_path.csv", index=False, mode="w")
     row = 0
     total = 0
     print(track_col)
@@ -66,18 +69,18 @@ def csvToGeohash(csvPath, dbName, title):
         # Write to file in batches
         if row > 1000000:
             dx = pd.DataFrame(geohash, columns=["geohash", "track", "mapmatched", "timestamp", "length"])
-            dx.to_csv(f"/home/data/import/files/{dbName}_path.csv", header=False, index=False, mode="a")
+            dx.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, index=False, mode="a")
             row = 0
             geohash = []
             total += 1
 
     dx = pd.DataFrame(geohash, columns=["geohash","track", "mapmatched","timestamp", "length"])
-    dx.to_csv("/home/data/import/files/"+dbName+"_path.csv", header=False, index=False, mode="a")
+    dx.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, index=False, mode="a")
 
     #track.csv
     tracks = []
     dx = pd.DataFrame(tracks, columns=['route', 'track', "mapmatched", "timestamp", "length"])
-    dx.to_csv("/home/data/import/files/"+dbName+"_track.csv", index=False, sep=';', quoting=csv.QUOTE_NONE, mode="w")
+    dx.to_csv(f"{directory_path}/{dbName}_track.csv", index=False, sep=';', quoting=csv.QUOTE_NONE, mode="w")
     row = 0
     total = 0
     grouped = df.groupby('track')
@@ -88,22 +91,22 @@ def csvToGeohash(csvPath, dbName, title):
         row+=1
         if row>10000:
             dx = pd.DataFrame(tracks, columns=['route', 'track', "mapmatched", "timestamp", "length"])
-            dx.to_csv("/home/data/import/files/"+dbName+"_track.csv", header=False, index=False, sep=';', quoting=csv.QUOTE_NONE, mode="a")
+            dx.to_csv(f"{directory_path}/{dbName}_track.csv", header=False, index=False, sep=';', quoting=csv.QUOTE_NONE, mode="a")
             row = 0
             tracks = []
             total +=1
             print(str(total*10)+"k tracks done...")
 
     dx = pd.DataFrame(tracks, columns=['route', 'track', "mapmatched", "timestamp", "length"])
-    dx.to_csv("/home/data/import/files/"+dbName+"_track.csv", header=False, index=False, sep=';', quoting=csv.QUOTE_NONE, mode="a")
+    dx.to_csv(f"{directory_path}/{dbName}_track.csv", header=False, index=False, sep=';', quoting=csv.QUOTE_NONE, mode="a")
 
     print("Generating db info...")
     #latlon_median.csv
     mapconfig = {"center":{"lat": df["latitude"].median(), "lon": df["longitude"].median()}, "title": title, "dbname": dbName, "attribution": ""}
-    with open("/var/www/html/center/"+dbName+".json", 'w') as outfile:
+    with open(f"/var/www/html/center/{dbName}.json", 'w') as outfile:
         outfile.write(json.dumps(mapconfig))
 
-def importData(dbName):
+def importData(dbName, directory_path):
     print("creating database...")
     mydb = mysql.connector.connect(
         host="localhost",
@@ -149,9 +152,9 @@ def importData(dbName):
     """)
     mycursor.execute("SET GLOBAL local_infile=1;")
     print("importing tracks ...")
-    mycursor.execute("load data local infile '/home/data/import/files/"+dbName+"_path.csv' into table `path` fields terminated by ',' lines terminated by '\n' ignore 1 lines (`hash`, `track`, `mapmatched`,`timestamp`,`length`);")
+    mycursor.execute(f"load data local infile '{directory_path}/{dbName}_path.csv' into table `path` fields terminated by ',' lines terminated by '\n' ignore 1 lines (`hash`, `track`, `mapmatched`,`timestamp`,`length`);")
     print("importing geojsons ...")
-    mycursor.execute("load data local infile '/home/data/import/files/"+dbName+"_track.csv' into table `tracks` fields terminated by ';' lines terminated by '\n' ignore 1 lines (`route`, `track`, `mapmatched`,`timestamp`, `length`);")
+    mycursor.execute(f"load data local infile '{directory_path}/{dbName}_track.csv' into table `tracks` fields terminated by ';' lines terminated by '\n' ignore 1 lines (`route`, `track`, `mapmatched`,`timestamp`, `length`);")
     mydb.commit()
     mycursor.close()
     mydb.disconnect()
@@ -162,7 +165,8 @@ if __name__ == '__main__':
         print("Specify path to CSV and dbName")
     else:
         title = sys.argv[2] if len(sys.argv)==3 else sys.argv[3]
-        csvToGeohash(sys.argv[1], sys.argv[2], title)
-        importData(sys.argv[2])
+        directory_path = f"/home/data/import/files/db/{sys.argv[2]}"
+        csvToGeohash(sys.argv[1], sys.argv[2], title, directory_path)
+        importData(sys.argv[2], directory_path)
         print("Finished")
         subprocess.run(["python3", "/var/www/html/geohash_area.py", sys.argv[2]])

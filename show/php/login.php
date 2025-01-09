@@ -32,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $row = $stmt->fetch();
             $_SESSION['loggedin'] = true;
             $_SESSION['username'] = $_POST["username"];
-            header("Location: index.php");
+            header("Location: ../index.php");
             exit;
         } else {
             $_SESSION['login_attempts']++;

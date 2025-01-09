@@ -10,12 +10,12 @@
     <title><?php echo $title; ?></title>
 
     <!-- Bootstrap core CSS -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
-    <link href="css/justified-nav.css" rel="stylesheet">
+    <link href="../css/justified-nav.css" rel="stylesheet">
 
-    <script src="js/ie-emulation-modes-warning.js"></script>
+    <script src="../js/ie-emulation-modes-warning.js"></script>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -24,8 +24,8 @@
     <![endif]-->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
-    <script src="js/jquery.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
+    <script src="../js/jquery.min.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
 
     <style>
         #map {
@@ -60,7 +60,7 @@
         </div>
         <div class="navbar-collapse collapse" id="navbar">
             <ul class="nav nav-justified">
-                <li><a href="index.php">Track search</a></li>
+                <li><a href="../index.php">Track search</a></li>
                 <li><a href="nwa.php">Needleman–Wunsch</a></li>
                 <li><a href="swa.php">Smith–Waterman</a></li>
             </ul>
@@ -74,7 +74,7 @@
         <h3 class="text-muted">COhave research</h3>
         <nav>
             <ul class="nav nav-justified">
-                <li><a href="index.php">Track search</a></li>
+                <li><a href="../index.php">Track search</a></li>
                 <li><a href="nwa.php">Needleman–Wunsch</a></li>
                 <li><a href="swa.php">Smith–Waterman</a></li>
             </ul>

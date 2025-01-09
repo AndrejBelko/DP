@@ -4,10 +4,10 @@ const fs = require('fs');
 
 // Get the file path from command line arguments
 const uploadedFilePath = process.argv[2];
-const logFilePath = 'script.log';
+const logFilePath = '/var/www/html/script.log';
 
 // Construct the command to run the Python script
-const pythonScript = `python3 mapmatch.py '${uploadedFilePath}'`; // Adjust as necessary
+const pythonScript = `python3 /var/www/html/mapmatch.py '${uploadedFilePath}'`; // Adjust as necessary
 
 exec(pythonScript, (error, stdout, stderr) => {
     const logOutput = `STDOUT: ${stdout}\nSTDERR: ${stderr}\nERROR: ${error ? error.message : 'None'}\n\n`;
