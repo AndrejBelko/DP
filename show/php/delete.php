@@ -85,6 +85,7 @@ function createCSV($filePath, $db, $table)
 
     // Fetch all rows as an associative array
     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    var_dump($data);
 
     if ($data) {
         // Open the file for writing
@@ -94,11 +95,12 @@ function createCSV($filePath, $db, $table)
         }
 
         // Write the header row (column names)
-        fputcsv($fileHandle, array_keys($data[0]));
+        fputcsv($fileHandle, array_keys($data[0]), ';');
 
         // Write the data rows
         foreach ($data as $row) {
-            fputcsv($fileHandle, $row);
+            var_dump($row);
+            fputcsv($fileHandle, $row, ';');
         }
 
         // Close the file

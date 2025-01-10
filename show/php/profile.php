@@ -92,7 +92,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $command = escapeshellcmd("python3 /var/www/html/track_to_database.py $filename $csv_file $username 0 $type $username" . " dataset");
 
                     $output = shell_exec($command . " 2>&1");
-                    echo $output;
 
                     $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
                     exec($command, $output, $return_var);

@@ -104,7 +104,7 @@ db_name = sys.argv[1]
 print(db_name)
 path = f"/home/data/import/files/db/{db_name}/{db_name}_path.csv"
 print("finished")
-df = pd.read_csv(path)
+df = pd.read_csv(path, sep=';')
 x = df['geohash'].unique()
 x = x.tolist()
 

@@ -38,15 +38,17 @@ geohash = []
 directory_path = f"/home/data/import/files/db/{dbName}"
 # Try to read the existing path CSV to get the max track ID, if not present create a new one
 try:
-    dx = pd.read_csv(f"{directory_path}/{dbName}_path.csv")
+    dx = pd.read_csv(f"{directory_path}/{dbName}_path.csv", sep=';')
     id = int(dx['track'].max()) + 1
+    row_id = int(dx['id'].max()) + 1
 except FileNotFoundError:
-    dx = pd.DataFrame(geohash, columns=["geohash", "track", "mapmatched", "type", "timestamp", "length"])
+    dx = pd.DataFrame(geohash, columns=["id","geohash", "track", "mapmatched", "type", "timestamp", "length"])
     dx['track'] = dx['track'].astype(int)  # Explicitly cast to int
     if not os.path.isdir(directory_path):
         os.makedirs(directory_path)
-    dx.to_csv(f"{directory_path}/{dbName}_path.csv", index=False, mode="w")
+    dx.to_csv(f"{directory_path}/{dbName}_path.csv", index=False, mode="w", sep=';', quoting=csv.QUOTE_NONE)
     id = 0
+    row_id = 0
 
 df = pd.read_csv(csvPath)
 df = df.fillna('')
@@ -91,6 +93,7 @@ for track_id, values in grouped:
     # Add rows for each point in the track
     for _, row_data in values.iterrows():
         geohash.append([
+            row_id,
             gh.encode(row_data['latitude'], row_data['longitude'], precision=7),  # Generate geohash
             track_id,  # Track ID
             mapmatched,  # Mapmatched flag (placeholder)
@@ -98,18 +101,19 @@ for track_id, values in grouped:
             timestamp,  # Current timestamp
             trajectory_length  # Total track length
         ])
+        row_id += 1
         row += 1
 
     # Write to file in batches
     if row > 1000000:
-        dx = pd.DataFrame(geohash, columns=["geohash", "track", "mapmatched", "type", "timestamp", "length"])
-        dx.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, index=False, mode="a")
+        dx = pd.DataFrame(geohash, columns=["id", "geohash", "track", "mapmatched", "type", "timestamp", "length"])
+        dx.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, index=False, mode="a", sep=';', quoting=csv.QUOTE_NONE)
         row = 0
         geohash = []
         total += 1
 
-dx = pd.DataFrame(geohash, columns=["geohash","track", "mapmatched", "type", "timestamp", "length"])
-dx.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, index=False, mode="a")
+dx = pd.DataFrame(geohash, columns=["id","geohash","track", "mapmatched", "type", "timestamp", "length"])
+dx.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, index=False, mode="a", sep=';', quoting=csv.QUOTE_NONE)
 
 
 # --------------------- Track.csv Generation ---------------------
@@ -204,14 +208,14 @@ mycursor.execute("DROP TABLE IF EXISTS `path`;")
 mycursor.execute("""
     CREATE TABLE `path` (
         `id` int(11) NOT NULL AUTO_INCREMENT,
-        `hash` varchar(7) NOT NULL,
+        `geohash` varchar(7) NOT NULL,
         `track` varchar(80) NOT NULL,
         `mapmatched` varchar(80) NOT NULL,
         `type` varchar(80) NOT NULL,
         `timestamp` TIMESTAMP NOT NULL,
         `length` FLOAT NOT NULL,
         PRIMARY KEY (`id`),
-        KEY `ihash` (`hash`)
+        KEY `ihash` (`geohash`)
     ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 """)
 
@@ -239,7 +243,7 @@ try:
     mycursor.execute(f"""
         LOAD DATA LOCAL INFILE '{directory_path}/{dbName}_path.csv'
         INTO TABLE `path`
-        FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES (`hash`, `track`, `mapmatched`, `type` , `timestamp`, `length`);
+        FIELDS TERMINATED BY ';' LINES TERMINATED BY '\n' IGNORE 1 LINES (`id`, `geohash`, `track`, `mapmatched`, `type` , `timestamp`, `length`);
     """)
 except mysql.connector.Error as err:
     print(f"Error loading path data: {err}")
