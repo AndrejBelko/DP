@@ -324,7 +324,7 @@ unset($db);
             </div>
         </div>
         <div class="col-md-6 text-center justify-content-center">
-            <button class="mt-4 btn btn-primary btn-sm" onclick="showElement('upload-trex')"><strong>Nahraj udaje z T-REXu
+            <button class="mt-4 mb-3 btn btn-primary btn-sm" onclick="showElement('upload-trex')"><strong>Nahraj udaje z T-REXu
                         (.gpx)</strong>
             </button>
             <div style="display: none" id="upload-trex" class="text-center justify-content-center">

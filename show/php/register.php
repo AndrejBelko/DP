@@ -62,9 +62,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (userExist($db, $_POST['email']) === true) {
         $errmsg .= "<p class='text-danger'>Používateľ s týmto e-mailom už existuje.</p>";
     }
-//    if ($password != $password_again) {
-//        $errmsg .= "<p class='text-danger'>Heslá sa nezhodujú.</p>";
-//    }
+    if ($password != $password_again) {
+        $errmsg .= "<p class='text-danger'>Heslá sa nezhodujú.</p>";
+    }
 
     if (empty($errmsg)) {
         $sql = "INSERT INTO pouzivatel (meno, email, heslo) VALUES (:meno, :email, :password)";
