@@ -131,7 +131,6 @@ unset($db);
         $DBinfo = $value;
         $queryDB = $value['dbname'];
     }
-
     ?>
 
 
@@ -845,7 +844,7 @@ unset($db);
         for (var i in gdata) {
             //x+= "<tr><td><div id='mapArea"+i+"' style='width:80px;height:80px;' onclick=\"showTrack("+i+")\"></div></td><td>"+gdata[i][1]+"</td><td>"+gdata[i][2]+"</td><td>"+gdata[i][3]+"</td><td>"+gdata[i][4]+"</td></tr>";
             //x+= "<tr><td><div id='mapArea"+i+"' style='width:80px;height:80px;' onclick=\"showTrack("+i+")\"></div></td><td><div onclick=\"showTrack("+i+")\">Track ID: <b>"+gdata[i][0]+"</b><br>Matched fields: <b>"+gdata[i][1]+"</b> ("+gdata[i][5]+")<br>Starting box: <b>"+gdata[i][2]+"</b><br>Ending box: <b>"+gdata[i][3]+"</b><br>Gaps: <b>"+gdata[i][4]+"</b><br></div></td></tr>"
-            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;' onclick=\"showTrack(" + i + ")\"></div></td><td><div onclick=\"showTrack(" + i + ")\"><h5><b>" + gdata[i][0] + "</b></h5>Path stars on box <b>" + gdata[i][2] + "</b> and ends on box <b>" + gdata[i][3] + "</b><br>In total, <b>" + gdata[i][1] + "</b> fields matched, with <b>" + gdata[i][4] + "</b> gaps<br>Matched fields: <b>" + gdata[i][5] + "</b></div></td></tr>";
+            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;' onclick=\"showTrack(" + i + ")\"></div></td><td><div onclick=\"showTrack(" + i + ")\"><h5><b>" + new Date(gdata[i][7]).toISOString().split('T')[0] + "</b></h5>Path stars on box <b>" + gdata[i][2] + "</b> and ends on box <b>" + gdata[i][3] + "</b><br>In total, <b>" + gdata[i][1] + "</b> fields matched, with <b>" + gdata[i][4] + "</b> gaps<br>Matched fields: <b>" + gdata[i][5] + "</b></div></td></tr>";
             graph2_array[1].push(i);
             graph2_array[0].push(gdata[i][1]);
             for (var j in gdata[i][5]) {
@@ -1170,7 +1169,7 @@ unset($db);
         match_count = 0;
 
         for (var i in gdata) {
-            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;' onclick=\"showTrack1(" + i + ")\"></div></td><td><div onclick=\"showTrack1(" + i + ")\"><h6><b>" + gdata[i][4] + "</b></h6>Mapmatched: <b>" + gdata[i][2] + "</b><br>Type: <b>" + gdata[i][3] + "</b><br> Length: <b>" + gdata[i][5] + " m</div></td></tr>";
+            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;' onclick=\"showTrack1(" + i + ")\"></div></td><td><div onclick=\"showTrack1(" + i + ")\"><h6><b>" + new Date(gdata[i][4]).toISOString().split('T')[0] + "</b></h6>Mapmatched: <b>" + gdata[i][2] + "</b><br>Type: <b>" + gdata[i][3] + "</b><br> Length: <b>" + gdata[i][5] + " m</div></td></tr>";
         }
 
         $("#totalfound").html(gdata.length);

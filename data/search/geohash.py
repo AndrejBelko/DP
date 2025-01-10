@@ -40,11 +40,13 @@ def runQuery(patterns, start_pos, end_pos, max_gap, min_match, dbName, type):
         return pd.DataFrame([], columns=['id', 'matches', 'start_pos', 'end_pos', 'max_gap','route', 'path'])
 
     mycursor.execute(
-        "select route as id, track from tracks where route in ("+str(r['id'].values.tolist())[1:-1]+");"
+        "select route as id, track, timestamp from tracks where route in ("+str(r['id'].values.tolist())[1:-1]+");"
     )
-    routes = pd.DataFrame(mycursor.fetchall(), columns=['id', 'route'])
+    routes = pd.DataFrame(mycursor.fetchall(), columns=['id', 'route', 'timestamp'])
     mycursor.close()
     mydb.disconnect()
+
+    routes['timestamp'] = routes['timestamp'].astype(str)
 
     r = r.merge(routes, on='id')
     return r
