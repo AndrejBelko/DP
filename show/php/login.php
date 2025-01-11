@@ -37,10 +37,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             $_SESSION['login_attempts']++;
             $_SESSION['last_login_attempt'] = time();
-            $error_msg .= "<p class='text-danger'>Nesprávny login alebo heslo.</p>";
+            $error_msg .= "Nesprávny login alebo heslo.";
         }
     } else {
-        $error_msg .= "<p class='text-danger'>Nesprávny login alebo heslo.</p>";
+        $error_msg .= "Nesprávny login alebo heslo.";
     }
 
     unset($stmt);
@@ -132,6 +132,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
         </div>
     </div>
+    <!-- Toast Container -->
+    <div class="toast-container p-3 top-0 start-50 translate-middle-x">
+        <div id="errorToast" class="toast bg-danger" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true">
+            <div class="toast-header">
+                <strong class="me-auto">Error</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                <?php echo $errmsg; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS (with Popper.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <?php if (!empty($errmsg)) : ?>
+        <script>
+            // Show the toast if $errmsg is not empty
+            const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+            errorToast.show();
+        </script>
+    <?php endif; ?>
 </section>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

@@ -22,6 +22,7 @@ if (!isset($_SESSION["username"]) || $_SESSION["loggedin"] !== true) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $infomsg = "";
     // Check if file was uploaded
     if (isset($_FILES['files']) || isset($_FILES['trexfiles'])) {
         $uploads_dir = '/home/data/import/files/uploads/' . $_SESSION["username"] . "/";
@@ -41,11 +42,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $filename = $names[$x];
             $tmp_name = $tmp_names[$x];
             if (isset($_FILES['trexfiles']) && pathinfo($filename, PATHINFO_EXTENSION) != 'gpx') {
-                echo "Please upload a valid GPX file.";
-                exit;
+                $infomsg = "Please upload a valid GPX file.";
+                break;
             } else if (isset($_FILES['files']) && strtolower(pathinfo($filename, PATHINFO_EXTENSION)) != 'csv') {
-                echo "Please upload a valid csv file.";
-                exit;
+                $infomsg = "Please upload a valid csv file.";
+                break;
             }
 
             // Store the uploaded GPX file in the target directory
@@ -128,19 +129,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     // Execute the Node.js script
                     exec($nodeScript, $output, $return_var);
 
-                    echo $output;
-
-                    // Check if JSON encoding was successful
-
                 } else {
-                    echo "Error: CSV file not generated.<br>";
+                    $infomsg = "Error: CSV file not generated.";
                 }
             } else {
-                echo "Failed to move the uploaded file.<br>";
+                $infomsg = "Failed to move the uploaded file.";
             }
         }
     } else {
-        echo "No file uploaded or an error occurred.<br>";
+        $infomsg = "No file uploaded or an error occurred.";
     }
 }
 
@@ -413,6 +410,54 @@ unset($db);
         <div id="speedchart" class="chartdiv"></div>
         <div id="heightchart" class="chartdiv"></div>
     </div>
+    <!-- Toast Container -->
+    <div class="toast-container p-3 top-0 start-50 translate-middle-x">
+        <div id="errorToast" class="toast bg-danger" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true">
+            <div class="toast-header">
+                <strong class="me-auto">Error</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                <?php echo $infomsg; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container p-3 top-0 start-50 translate-middle-x">
+        <div id="successToast" class="toast bg-success" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true">
+            <div class="toast-header">
+                <strong class="me-auto">Success</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                Načítanie prebehlo úspešne.
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS (with Popper.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <?php if (!empty($infomsg)) : ?>
+        <script>
+            // Show the toast if $errmsg is not empty
+            const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+            errorToast.show();
+            setTimeout(() => {
+                location.reload();
+            }, 5000); // Reload after 5 seconds
+        </script>
+    <?php elseif ($infomsg === ""): ?>
+        <script>
+            // Show the toast if $errmsg is not empty
+            const errorToast = new bootstrap.Toast(document.getElementById('successToast'));
+            errorToast.show();
+            setTimeout(() => {
+                location.reload();
+            }, 5000); // Reload after 5 seconds
+        </script>
+    <?php endif; ?>
 </div>
 
 <!-- Include Bootstrap JS (optional, for advanced interactions) -->

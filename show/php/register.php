@@ -57,13 +57,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password_again = $_POST['password_again'];
 
     if (checkLength($_POST['password'], 6, 32) === false) {
-        $errmsg .= "<p class='text-danger'>Heslo musí mať 6 až 32 znakov.</p>";
+        $errmsg .= "Heslo musí mať 6 až 32 znakov.";
     }
     if (userExist($db, $_POST['email']) === true) {
-        $errmsg .= "<p class='text-danger'>Používateľ s týmto e-mailom už existuje.</p>";
+        $errmsg .= "Používateľ s týmto e-mailom už existuje.";
     }
     if ($password != $password_again) {
-        $errmsg .= "<p class='text-danger'>Heslá sa nezhodujú.</p>";
+        $errmsg .= "Heslá sa nezhodujú.";
     }
 
     if (empty($errmsg)) {
@@ -195,10 +195,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
         </div>
     </div>
-    <?php
-    if (!empty($errmsg)) {
-        echo $errmsg;
-    } ?>
+
+    <!-- Toast Container -->
+    <div class="toast-container p-3 top-0 start-50 translate-middle-x">
+        <div id="errorToast" class="toast bg-danger" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true">
+            <div class="toast-header">
+                <strong class="me-auto">Error</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                <?php echo $errmsg; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS (with Popper.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <?php if (!empty($errmsg)) : ?>
+        <script>
+            // Show the toast if $errmsg is not empty
+            const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+            errorToast.show();
+        </script>
+    <?php endif; ?>
 </section>
 
 <footer class="d-flex justify-content-center py-3 my-4 mt-4 border-top border-dark-subtle">
