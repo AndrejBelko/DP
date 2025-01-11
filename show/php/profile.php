@@ -444,18 +444,12 @@ unset($db);
             // Show the toast if $errmsg is not empty
             const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
             errorToast.show();
-            setTimeout(() => {
-                location.reload();
-            }, 5000); // Reload after 5 seconds
         </script>
     <?php elseif ($infomsg === ""): ?>
         <script>
             // Show the toast if $errmsg is not empty
             const errorToast = new bootstrap.Toast(document.getElementById('successToast'));
             errorToast.show();
-            setTimeout(() => {
-                location.reload();
-            }, 5000); // Reload after 5 seconds
         </script>
     <?php endif; ?>
 </div>
