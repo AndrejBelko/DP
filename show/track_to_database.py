@@ -223,7 +223,7 @@ mycursor.execute("""
 mycursor.execute("DROP TABLE IF EXISTS `tracks`;")
 mycursor.execute("""
     CREATE TABLE `tracks` (
-        `route` varchar(250) NOT NULL,
+        `route` int(11) NOT NULL,
         `filename` varchar(250) NOT NULL,
         `track` mediumtext NOT NULL,
         `mapmatched` varchar(80) NOT NULL,

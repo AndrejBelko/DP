@@ -85,7 +85,6 @@ function createCSV($filePath, $db, $table)
 
     // Fetch all rows as an associative array
     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    var_dump($data);
 
     if ($data) {
         // Open the file for writing
@@ -99,7 +98,13 @@ function createCSV($filePath, $db, $table)
 
         // Write the data rows
         foreach ($data as $row) {
-            var_dump($row);
+            // Check if the 'timestamp' field exists and format it
+            if (isset($row['timestamp'])) {
+                $dateTime = new DateTime($row['timestamp']);
+                $row['timestamp'] = $dateTime->format('Y-m-d\TH:i:s\Z'); // Format to 'YYYY-MM-DDTHH:MM:SSZ'
+            }
+
+            // Write the row to the CSV
             fputcsv($fileHandle, $row, ';');
         }
 

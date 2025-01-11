@@ -9,6 +9,14 @@ error_reporting(E_ALL);
 require_once('config.php');
 session_start();
 
+if (!isset($_SESSION["username"]) || $_SESSION["loggedin"] !== true) {
+    header("Location: login.php");
+    exit;
+}
+
+$username1 = $_SESSION['username'];
+$err = false;
+
 try {
     $db = new PDO("mysql:host=$hostname;dbname=$dbname", $username, $password);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -16,9 +24,12 @@ try {
     echo $e->getMessage();
 }
 
-if (!isset($_SESSION["username"]) || $_SESSION["loggedin"] !== true) {
-    header("Location: login.php");
-    exit;
+try {
+    $db1 = new PDO("mysql:host=$hostname;dbname=$username1", $username, $password);
+    $db1->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    $err = true;
+    echo $e->getMessage();
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -141,31 +152,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-
-$username1 = $_SESSION["username"];
-
-$sql = "SELECT meno, email, heslo FROM pouzivatel WHERE meno = :username";
-$stmt = $db->prepare($sql);
-$stmt->bindParam(":username", $username1, PDO::PARAM_STR);
-$stmt->execute();
-$row = $stmt->fetch();
-$err = false;
-try {
-    $db = new PDO("mysql:host=$hostname;dbname=$username1", $username, $password);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    $err = true;
-}
-
 if (!$err) {
-    $sql = "SELECT * FROM tracks";
-    $stmt1 = $db->prepare($sql);
+    $sql = "SELECT * FROM tracks order by route asc";
+    $stmt1 = $db1->prepare($sql);
     $stmt1->execute();
     $row = $stmt1->fetchAll();
 }
 
 unset($stmt);
 unset($db);
+unset($db1);
 
 ?>
 <!doctype html>
@@ -369,7 +365,7 @@ unset($db);
                             for ($i = 0; $i < count($row); $i += 2) {
                                 $row_tmp = $row[$i]; // Access every second element
                                 echo "<tr>";
-                                echo "<td>" . $row_tmp['route'] . "</td>";
+                                echo "<td>" . $row_tmp['route'] / 2 . "</td>";
                                 echo "<td>" . $row_tmp['filename'] . "</td>";
                                 echo "<td>" . $row_tmp['timestamp'] . "</td>";
                                 if ($row_tmp['type'] === 'Walk') {
