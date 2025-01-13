@@ -1206,7 +1206,7 @@ unset($db);
             }
         });
         geoResult.addTo(map);
-        map.setView(geoResult.getBounds().getCenter(), 13, { animate: true, duration: 2.0 })
+        map.fitBounds(geoResult.getBounds())
     }
 
     showAllPaths();
