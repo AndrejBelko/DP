@@ -17,7 +17,7 @@ def runQuery(patterns, start_pos, end_pos, max_gap, min_match, dbName, type):
         "INSERT INTO hladac (kod) VALUES ('" + "'),('".join(patterns)+ "')"
     )
     mycursor.execute(
-                f"select p.track as track, h.id as q_id from path p inner join hladac h on h.kod = p.hash where p.mapmatched = {type} order by p.track, p.id; "
+                f"select p.track as track, h.id as q_id from path p inner join hladac h on h.kod = p.geohash where p.mapmatched = {type} order by p.track, p.id; "
             )
 
     myresult = pd.DataFrame(mycursor.fetchall(), columns=['id', 'pos'])
@@ -48,8 +48,16 @@ def runQuery(patterns, start_pos, end_pos, max_gap, min_match, dbName, type):
 
     routes['timestamp'] = routes['timestamp'].astype(str)
 
+    # Ensure 'id' columns have the same type in both DataFrames
+    r['id'] = r['id'].astype(str)  # Or use int if you prefer
+    routes['id'] = routes['id'].astype(str)  # Same here, or use int
+
+    # Now perform the merge
     r = r.merge(routes, on='id')
+
+    # Continue with the rest of your code
     return r
+
 
 if __name__ == '__main__':
 

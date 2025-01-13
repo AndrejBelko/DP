@@ -937,6 +937,7 @@ unset($db);
             }
         });
         geoResult.addTo(map);
+        map.setView(geoResult.getBounds().getCenter(), 13, { animate: true, duration: 2.0 })
     }
 
     function showAll() {
@@ -1198,13 +1199,14 @@ unset($db);
         }
         if (gdataPrintResultPerPoint != null) {
             map.removeLayer(gdataPrintResultPerPoint);
-        }
+        };
         geoResult = L.geoJSON(JSON.parse(gdata[id][1]), {
             style: function (feature) {
                 return {fill: false, fillOpacity: 0.6, stroke: true};
             }
         });
         geoResult.addTo(map);
+        map.setView(geoResult.getBounds().getCenter(), 13, { animate: true, duration: 2.0 })
     }
 
     showAllPaths();
