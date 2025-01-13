@@ -32,8 +32,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             throw new Exception("Folder required",400);
         }
 
+        $username = "";
+        $filename = $_FILES["file"]["tmp_name"];
+
+        if (preg_match('/id-(.*?)\//', $headers["x-folder"], $matches)) {
+            $username = $matches[1]; // This will contain '16112023pro'
+        }
+
         // $target_dir = "/home/data/import/uploads/".$folder."/";
-        $target_dir = "/home/data/import/uploads/mobile/";
+        $target_dir = "/home/data/import/files/uploads/" . $username . "/";
         $target_file = $target_dir . basename($_FILES["file"]["name"]);
 
         if (!file_exists($target_dir)) {
@@ -44,13 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if (!move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
             throw new Exception("Failed to upload.", 500);
-        }
-
-
-        $username = "";
-
-        if (preg_match('/id-(.*?)\//', $headers["x-folder"], $matches)) {
-            $username = $matches[1]; // This will contain '16112023pro'
         }
 
         $sql = "SELECT id FROM pouzivatel WHERE meno = :username";
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $row = $stmt->fetch();
 
-        $command = "python3 /var/www/html/track_to_database.py $target_file $username 0 $username" . " dataset 2>&1";
+        $command = "python3 /var/www/html/track_to_database.py $filename $target_file $username 0 $username" . " dataset 2>&1";
         exec($command, $output, $return_var);
 
         $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
@@ -90,7 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'container' => "valhalla", // Container name
             'username' => $username, // Ensure $username is defined
             'parameters' => json_decode($parametersJson), // Decode back to array to ensure it's properly structured
-            'file' => $target_file // Ensure $gpx_file is defined
+            'file' => $target_file, // Ensure $gpx_file is defined
+            'filename' => $filename
         ];
 
         // Convert the input array to JSON
