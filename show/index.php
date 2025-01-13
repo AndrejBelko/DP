@@ -937,7 +937,7 @@ unset($db);
             }
         });
         geoResult.addTo(map);
-        map.setView(geoResult.getBounds().getCenter(), 13, { animate: true, duration: 2.0 })
+        map.fitBounds(geoResult.getBounds(), { animate: true, duration: 2.0 })
     }
 
     function showAll() {
@@ -1206,7 +1206,7 @@ unset($db);
             }
         });
         geoResult.addTo(map);
-        map.fitBounds(geoResult.getBounds())
+        map.fitBounds(geoResult.getBounds(), { animate: true, duration: 2.0 })
     }
 
     showAllPaths();
