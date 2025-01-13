@@ -33,7 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         $username = "";
-        $filename = $_FILES["file"]["tmp_name"];
+        $filename = basename($_FILES["file"]["name"]);
+        $type = $headers["x-type"];
 
         if (preg_match('/id-(.*?)\//', $headers["x-folder"], $matches)) {
             $username = $matches[1]; // This will contain '16112023pro'
@@ -64,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $row = $stmt->fetch();
 
-        $command = "python3 /var/www/html/track_to_database.py $filename $target_file $username 0 $username" . " dataset 2>&1";
+        $command = "python3 /var/www/html/track_to_database.py $filename $target_file $username 0 $type $username" . " dataset 2>&1";
         exec($command, $output, $return_var);
 
         $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
@@ -76,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 //    $walk = $_POST['type'];
 
         $params = [
-            'type' => 'Walk',
+            'type' => $type,
             'gps_accuracy' => "5", // Ensure $gpsAccuracy is defined
             'search_radius' => "50", // Ensure $searchRadius is defined
             'turn_penalty_factor' => "200" // Ensure $turnPenalty is defined
