@@ -55,10 +55,23 @@ df = df.fillna('')
 columns_with_time = [col for col in df.columns if 'date' in col.lower()]
 if len(columns_with_time) != 0:
     timestamp = df[columns_with_time[0]].iloc[0]
+    if isinstance(timestamp, (int, np.int64)) and len(str(timestamp)) > 10:
+        # Convert milliseconds to seconds
+        timestamp_in_s = timestamp / 1000
+
+        # Convert to datetime object
+        timestamp = datetime.fromtimestamp(timestamp_in_s)
 else:
     columns_with_time = [col for col in df.columns if 'time' in col.lower()]
     if len(columns_with_time) != 0:
         timestamp = df[columns_with_time[0]].iloc[0]
+        if isinstance(timestamp, (int, np.int64)) and len(str(timestamp)) > 10:
+                # Convert milliseconds to seconds
+                timestamp_in_s = timestamp / 1000
+
+                # Convert to datetime object
+                timestamp = datetime.fromtimestamp(timestamp_in_s)
+
 
 df['track'] = id
 df['track'] = df['track'].astype(int)  # Explicitly cast to int
