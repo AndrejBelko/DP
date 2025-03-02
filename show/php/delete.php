@@ -51,17 +51,17 @@ if (isset($_GET['user_id']) && isset($_GET['track_id'])) {
 //        deleteCSV($filePath1);
 //        createCSV($filePath1,$db, "tracks");
 //
-//        $filePath2 = '/home/data/import/files/db/' . $username1 . '/' . $username1 . '_path.csv';
-//        deleteCSV($filePath2);
-//        createCSV($filePath2,$db, "path");
+        $filePath2 = '/home/data/import/files/db/' . $username1 . '/' . $username1 . '_path.csv';
+        deleteCSV($filePath2);
+        createCSV($filePath2,$db, "path");
 //
 //        // Execute external Python script
-//        if (file_exists($filePath2)){
-//            $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username1);
-//            exec($command, $output, $return_var);
-//        } else{
-//            unlink('/var/www/html/coverage/'.$username1.'.geojson');
-//        }
+        if (file_exists($filePath2)){
+            $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username1);
+            exec($command, $output, $return_var);
+        } else{
+            unlink('/var/www/html/coverage/'.$username1.'.geojson');
+        }
 
     } catch (PDOException $e) {
         echo "Database error: " . $e->getMessage();
