@@ -38,18 +38,14 @@ print("Reading dataset...")
 geohash = []
 directory_path = f"/home/data/import/files/db/{dbName}"
 # Try to read the existing path CSV to get the max track ID, if not present create a new one
-# try:
-#     dx = pd.read_csv(f"{directory_path}/{dbName}_path.csv", sep=';')
-#     id = int(dx['track'].max()) + 1
-#     row_id = int(dx['id'].max()) + 1
-# except FileNotFoundError:
-#     dx = pd.DataFrame(geohash, columns=["id","user_id" ,"geohash", "track", "mapmatched", "type", "timestamp", "length"])
-#     dx['track'] = dx['track'].astype(int)  # Explicitly cast to int
-#     if not os.path.isdir(directory_path):
-#         os.makedirs(directory_path)
-#     dx.to_csv(f"{directory_path}/{dbName}_path.csv", index=False, mode="w", sep=';', quoting=csv.QUOTE_NONE)
-#     id = 0
-#     row_id = 0
+try:
+    dx1 = pd.read_csv(f"{directory_path}/{dbName}_path.csv", sep=';')
+except FileNotFoundError:
+    dx1 = pd.DataFrame(geohash, columns=["user_id","geohash", "track_id", "mapmatched", "type", "timestamp", "length"])
+    dx1['track_id'] = dx1['track_id'].astype(int)  # Explicitly cast to int
+    if not os.path.isdir(directory_path):
+        os.makedirs(directory_path)
+    dx1.to_csv(f"{directory_path}/{dbName}_path.csv", index=False, mode="w", sep=';', quoting=csv.QUOTE_NONE)
 
 df = pd.read_csv(csvPath)
 df = df.fillna('')
@@ -67,11 +63,11 @@ else:
     if len(columns_with_time) != 0:
         timestamp = df[columns_with_time[0]].iloc[0]
         if isinstance(timestamp, (int, np.int64)) and len(str(timestamp)) > 10:
-                # Convert milliseconds to seconds
-                timestamp_in_s = timestamp / 1000
+            # Convert milliseconds to seconds
+            timestamp_in_s = timestamp / 1000
 
-                # Convert to datetime object
-                timestamp = datetime.fromtimestamp(timestamp_in_s)
+            # Convert to datetime object
+            timestamp = datetime.fromtimestamp(timestamp_in_s)
 
 
 df['track_id'] = track_id
@@ -120,13 +116,13 @@ for track_id, values in grouped:
     # Write to file in batches
     if row > 1000000:
         dx1 = pd.DataFrame(geohash, columns=["user_id", "geohash", "track_id", "mapmatched", "type", "timestamp", "length"])
-        dx.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, index=False, mode="a", sep=';', quoting=csv.QUOTE_NONE)
+        dx1.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, index=False, mode="a", sep=';', quoting=csv.QUOTE_NONE)
         row = 0
         geohash = []
         total += 1
 
 dx1 = pd.DataFrame(geohash, columns=["user_id","geohash", "track_id", "mapmatched", "type", "timestamp", "length"])
-# dx.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, index=False, mode="a", sep=';', quoting=csv.QUOTE_NONE)
+dx1.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, index=False, mode="a", sep=';', quoting=csv.QUOTE_NONE)
 
 
 # --------------------- Track.csv Generation ---------------------

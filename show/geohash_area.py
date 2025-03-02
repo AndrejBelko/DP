@@ -123,26 +123,3 @@ print("all saved")
 
 with open(f'/var/www/html/coverage/{db_name}_components.json', 'r') as openfile:
     json_object = json.load(openfile)
-
-
-
-
-# def ukazka():
-#     x = ['u0yjkbx', 'u0yjm08', 'u0yjm0c', 'u0yjm0f', 'u0yjm0g', 'u0yjm15']
-#     # vstup
-#     print(geohash_codes_to_geojson(x))
-#
-#     R = calculate_components(x)
-#     geo = generate_geojson_from_components(R)
-#     # vystup
-#     print(geo)
-#
-#     # ukazka 2
-#     x = ['u2s4hxj', 'u2s4hxp', 'u2s4hxn', 'u2s4hwv', 'u2s4hwt', 'u2s4hwq', 'u2s4hzh', 'u2s4hzj', 'u2s4hys', 'u2s4hyv',
-#          'u2s4hyy', 'u2s4hyw', 'u2s4hyg', 'u2s4hzn', 'u2s4hyt', 'u2s4hyu']
-#
-#     print(geohash_codes_to_geojson(x))
-#     R = calculate_components(x)
-#     print(len(R))
-#     geo = generate_geojson_from_components(R)
-#     print(geo)
