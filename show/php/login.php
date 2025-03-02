@@ -26,13 +26,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($stmt->rowCount() == 1) {
         $row = $stmt->fetch();
-        $hashed_password = $row["heslo"];
+        $hashed_password = $row["password"];
+        $user_id = $row["id"];
 
         if (password_verify($_POST["password"], $hashed_password)) {
             $row = $stmt->fetch();
             $_SESSION['loggedin'] = true;
             $_SESSION['username'] = $_POST["username"];
-            $_SESSION['user_id'] = $row["id"];
+            $_SESSION['user_id'] = $user_id;
             header("Location: ../index.php");
             exit;
         } else {
