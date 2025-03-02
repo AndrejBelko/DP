@@ -24,14 +24,6 @@ try {
     echo $e->getMessage();
 }
 
-try {
-    $db1 = new PDO("mysql:host=$hostname;dbname=$username1", $username, $password);
-    $db1->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    $err = true;
-    echo $e->getMessage();
-}
-
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $infomsg = "";
     // Check if file was uploaded
@@ -83,14 +75,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if (file_exists($csv_file)) {
 
                     // Insert file information into the database
-                    $sql = "SELECT id FROM pouzivatel WHERE meno = :username";
+                    $sql = "SELECT id FROM users WHERE username = :username";
                     $stmt = $db->prepare($sql);
                     $stmt->bindParam(":username", $_SESSION["username"], PDO::PARAM_STR);
                     $stmt->execute();
                     $row = $stmt->fetch();
                     $pouzivatel_id = $row["id"];
 
-                    $sql = "INSERT INTO subor (pouzivatel_id, nazov, cesta) VALUES (:pouzivatel_id, :nazov, :cesta)";
+                    $sql = "SELECT max(track_id) as 'track_id' FROM path WHERE user_id = :user_id";
+                    $stmt = $db->prepare($sql);
+                    $stmt->bindParam(":user_id", $pouzivatel_id, PDO::PARAM_STR);
+                    $stmt->execute();
+                    $row = $stmt->fetch();
+                    $track_id = strval($row["track_id"] + 1);
+
+                    $sql = "INSERT INTO files (user_id, name, path) VALUES (:pouzivatel_id, :nazov, :cesta)";
                     $stmt = $db->prepare($sql);
                     $stmt->bindParam(":pouzivatel_id", $pouzivatel_id, PDO::PARAM_INT);
                     $stmt->bindParam(":nazov", $csv_name, PDO::PARAM_STR);  // Save the CSV file name
@@ -101,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $username = $_SESSION['username'];
                     $type = isset($_POST['trajectoryType']) ? 'Drive' : 'Walk';
 
-                    $command = escapeshellcmd("python3 /var/www/html/track_to_database.py $filename $csv_file $username 0 $type $username" . " dataset");
+                    $command = escapeshellcmd("python3 /var/www/html/track_to_database.py $filename $csv_file $username $pouzivatel_id 0 $type $track_id" . " dataset");
 
                     $output = shell_exec($command . " 2>&1");
 
@@ -113,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 //                $turnPenalty = $_POST['turn_penalty_factor'];
 //                $walk = $_POST['type'];
 
+                    // Define parameters
                     $params = [
                         'type' => $type,
                         'gps_accuracy' => "5", // Ensure $gpsAccuracy is defined
@@ -123,22 +123,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     // Convert the parameters array to JSON
                     $parametersJson = json_encode($params, JSON_PRETTY_PRINT);
 
-                    // Define the input array for the container request
+                    // Define the input array for the Python script
                     $input = [
                         'container' => "valhalla", // Container name
                         'username' => $username, // Ensure $username is defined
-                        'parameters' => json_decode($parametersJson), // Decode back to array to ensure it's properly structured
+                        'parameters' => json_decode($parametersJson, true), // Decode back to array
                         'file' => $gpx_file, // Ensure $gpx_file is defined
-                        'filename' => $filename
+                        'filename' => $filename,
+                        'user_id' => $pouzivatel_id,
+                        'track_id' => $track_id
                     ];
 
                     // Convert the input array to JSON
                     $jsonInput = json_encode($input, JSON_PRETTY_PRINT);
 
-                    $nodeScript = "node /var/www/html/js/upload.js '$jsonInput'"; // Pass the uploaded file path to Node.js script
+                    // Define the Python script command
+                    $pythonScript = "python3 /var/www/html/mapmatch.py '$jsonInput'";
 
-                    // Execute the Node.js script
-                    exec($nodeScript, $output, $return_var);
+                    // Execute the Python script
+                    exec($pythonScript, $output, $return_var);
+
 
                 } else {
                     $infomsg = "Error: CSV file not generated.";
@@ -153,15 +157,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 if (!$err) {
-    $sql = "SELECT * FROM tracks order by route asc";
-    $stmt1 = $db1->prepare($sql);
+    $user_id = intval($_SESSION['user_id']);
+    $sql = "SELECT * FROM tracks where user_id = :user_id";
+    $stmt1 = $db->prepare($sql);
+    $stmt1->bindParam(":user_id", $user_id, PDO::PARAM_STR);
     $stmt1->execute();
     $row = $stmt1->fetchAll();
 }
 
-unset($stmt);
 unset($db);
-unset($db1);
 
 ?>
 <!doctype html>
