@@ -16,7 +16,7 @@ try {
 $error_msg = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $sql = "SELECT meno, email, heslo FROM pouzivatel WHERE meno = :username";
+    $sql = "SELECT id, username, email, password FROM users WHERE username = :username";
 
     $stmt = $db->prepare($sql);
 
@@ -32,6 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $row = $stmt->fetch();
             $_SESSION['loggedin'] = true;
             $_SESSION['username'] = $_POST["username"];
+            $_SESSION['user_id'] = $row["id"];
             header("Location: ../index.php");
             exit;
         } else {
