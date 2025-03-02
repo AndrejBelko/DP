@@ -16,6 +16,19 @@ try {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
+        $sql = "SELECT * FROM users WHERE username = :username";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(":username", $username, PDO::PARAM_STR);
+        $stmt->execute();
+
+        if ($stmt->rowCount() != 1) {
+            throw new Exception("User does not exists.", 404);
+        }
+
+        $row = $stmt->fetch();
+        $pouzivatel_id = $row["id"];
+        $token = $row['token'];
+
         $headers = getallheaders();
 
         $apikey = isset($headers["x-apikey"]) ? $headers["x-apikey"] : "";
@@ -26,6 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($apikey!="mvx0dtrEknr53uEozm1Czf8oCvnxyIPpkB1Up2p6PK"){
             throw new Exception("Api invalid",401);
         }
+
+//        $secret_token = isset($headers["x-token"]) ? $headers["x-token"] : "";
+//        if ($secret_token!=$token){
+//            throw new Exception("Secret token does not match.",401);
+//        }
 
         $folder = isset($headers["x-folder"]) ? $headers["x-folder"] : "";
         if ($folder==""){
@@ -53,18 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (!move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
             throw new Exception("Failed to upload.", 500);
         }
-
-        $sql = "SELECT id FROM users WHERE username = :username";
-        $stmt = $db->prepare($sql);
-        $stmt->bindParam(":username", $username, PDO::PARAM_STR);
-        $stmt->execute();
-
-        if ($stmt->rowCount() != 1) {
-            throw new Exception("Failed to upload.", 500);
-        }
-
-        $row = $stmt->fetch();
-        $pouzivatel_id = $row["id"];
 
         $sql = "SELECT max(track_id) as 'track_id' FROM path WHERE user_id = :user_id";
         $stmt = $db->prepare($sql);
