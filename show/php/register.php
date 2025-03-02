@@ -37,7 +37,7 @@ function userExist($db, $email)
 
     $param_email = trim($email);
 
-    $sql = "SELECT id FROM pouzivatel WHERE email = :email";
+    $sql = "SELECT id FROM users WHERE email = :email";
     $stmt = $db->prepare($sql);
     $stmt->bindParam(":email", $param_email, PDO::PARAM_STR);
 
@@ -67,15 +67,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     if (empty($errmsg)) {
-        $sql = "INSERT INTO pouzivatel (meno, email, heslo) VALUES (:meno, :email, :password)";
+        $sql = "INSERT INTO users (username, email, password) VALUES (:username, :email, :password)";
 
-        $meno = $_POST['username'];
+        $username = $_POST['username'];
         $email = $_POST['email'];
         $hashed_password = password_hash($_POST['password'], PASSWORD_BCRYPT);
 
         $stmt = $db->prepare($sql);
 
-        $stmt->bindParam(":meno", $meno, PDO::PARAM_STR);
+        $stmt->bindParam(":username", $username, PDO::PARAM_STR);
         $stmt->bindParam(":email", $email, PDO::PARAM_STR);
         $stmt->bindParam(":password", $hashed_password, PDO::PARAM_STR);
 
