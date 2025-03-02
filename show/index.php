@@ -972,7 +972,7 @@ unset($db);
             url: "php/geohash_py.php",
             dataType: "json",
             data: {
-                "dbName": queryDB,
+                "dbName": "hashcode",
                 "type": mapmatched,
                 "pattern": interpolated,
                 "match": $("#gsMatch").val(),
@@ -1056,7 +1056,7 @@ unset($db);
                 url: "php/show_all_tracks.php",
                 dataType: "json",
                 data: {
-                    "dbName": queryDB,
+                    "dbName": "hashcode",
                     "type": mapmatched
                 }
             })

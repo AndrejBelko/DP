@@ -17,7 +17,7 @@ def runQuery(patterns, start_pos, end_pos, max_gap, min_match, dbName, type):
         "INSERT INTO hladac (kod) VALUES ('" + "'),('".join(patterns)+ "')"
     )
     mycursor.execute(
-                f"select p.track as track, h.id as q_id from path p inner join hladac h on h.kod = p.geohash where p.mapmatched = {type} order by p.track, p.id; "
+                f"select p.track_id as track, h.id as q_id from path p inner join hladac h on h.kod = p.geohash where p.mapmatched = {type} order by p.track_id, p.id; "
             )
 
     myresult = pd.DataFrame(mycursor.fetchall(), columns=['id', 'pos'])
@@ -37,12 +37,12 @@ def runQuery(patterns, start_pos, end_pos, max_gap, min_match, dbName, type):
     r = r[(r.matches>=min_match) & (r.start_pos<=start_pos) & (r.end_pos>=end_pos) & (r.max_gap<=max_gap) ]
 
     if len(r)==0:
-        return pd.DataFrame([], columns=['id', 'matches', 'start_pos', 'end_pos', 'max_gap','route', 'path'])
+        return pd.DataFrame([], columns=['id', 'matches', 'start_pos', 'end_pos', 'max_gap','track_id', 'path'])
 
     mycursor.execute(
-        "select route as id, track, timestamp from tracks where route in ("+str(r['id'].values.tolist())[1:-1]+");"
+        f"select track_id as id, track, timestamp, mapmatched from tracks where mapmatched = {type} and track_id in ({str(r['id'].values.tolist())[1:-1]});"
     )
-    routes = pd.DataFrame(mycursor.fetchall(), columns=['id', 'route', 'timestamp'])
+    routes = pd.DataFrame(mycursor.fetchall(), columns=['id', 'track_id', 'timestamp', 'mapmatched'])
     mycursor.close()
     mydb.disconnect()
 
