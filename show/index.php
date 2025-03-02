@@ -19,8 +19,8 @@ SELECT
     SCHEMA_NAME 
 FROM INFORMATION_SCHEMA.SCHEMATA 
 WHERE SCHEMA_NAME NOT IN (
-    SELECT meno 
-    FROM hashcode.pouzivatel
+    SELECT username 
+    FROM hashcode.users
 )
   and (SCHEMA_NAME NOT LIKE  '%mysql%'
   and SCHEMA_NAME NOT LIKE  '%information_schema%'  
