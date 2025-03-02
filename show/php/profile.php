@@ -268,10 +268,10 @@ unset($db);
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link active fs-5" aria-current="page" href="../index.php">Mapa</a>
+                        <a class="nav-link fs-5" aria-current="page" href="../index.php">Mapa</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link fs-5" href="profile.php">
+                        <a class="nav-link active fs-5" href="profile.php">
                             Profil
                         </a>
                     </li>
