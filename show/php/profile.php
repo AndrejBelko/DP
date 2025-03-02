@@ -151,6 +151,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $infomsg = "Failed to move the uploaded file.";
             }
         }
+    } elseif ($_POST['secToken']){
+        $sql = "UPDATE users SET token = :token WHERE id = :id";
+
+        // Retrieve values from POST or other sources
+        $token = $_POST['secToken'];
+        $id = $_SESSION['user_id']; // Ensure this is the ID of the user you want to update
+
+        // Prepare and execute the statement
+        $stmt = $db->prepare($sql);
+
+        // Bind parameters to the SQL query
+        $stmt->bindParam(":token", $token, PDO::PARAM_STR);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT); // Bind the id to the parameter
+
+        // Execute the query
+        $stmt->execute();
+
     } else {
         $infomsg = "No file uploaded or an error occurred.";
     }
@@ -288,6 +305,11 @@ unset($db);
                     <li class="nav-item">
                         <div class="nav-link fs-5">
                             Vitaj, <?php echo $_SESSION['username'] ?>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <div class="nav-link fs-5" id="token" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                            Bezpečnostný token
                         </div>
                     </li>
                 </ul>
@@ -436,6 +458,29 @@ unset($db);
         </div>
     </div>
 
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <!-- Modal -->
+                <div class="modal-body">
+                    <form action="profile.php" method="post" id="formSecToken">
+                        <label for="secToken">Vložte svoj bezpečnostný token:</label>
+                        <input type="text" id="secToken" name="secToken" class="form-control" placeholder="123XYZ">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" form="formSecToken">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS (with Popper.js) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -459,6 +504,10 @@ unset($db);
 </body>
 </html>
 <script>
+    document.getElementById("token").addEventListener('click', function() {
+        const errorToast = new bootstrap.Toast(document.getElementById('tokenToast'));
+        errorToast.show();
+    });
     function drawTrackScaledWithoutZoom(coordinates, svgWidth, svgHeight, i) {
         // Find the minimum and maximum values for x and y coordinates.
         let minX = coordinates[0][0], maxX = coordinates[0][0];

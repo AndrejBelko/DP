@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             throw new Exception("Failed to upload.", 500);
         }
 
-        $sql = "SELECT id FROM pouzivatel WHERE meno = :username";
+        $sql = "SELECT id FROM users WHERE username = :username";
         $stmt = $db->prepare($sql);
         $stmt->bindParam(":username", $username, PDO::PARAM_STR);
         $stmt->execute();
@@ -64,8 +64,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         $row = $stmt->fetch();
+        $pouzivatel_id = $row["id"];
 
-        $command = "python3 /var/www/html/track_to_database.py $filename $target_file $username 0 $type $username" . " dataset 2>&1";
+        $sql = "SELECT max(track_id) as 'track_id' FROM path WHERE user_id = :user_id";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(":user_id", $pouzivatel_id, PDO::PARAM_STR);
+        $stmt->execute();
+        $row_track = $stmt->fetch();
+        $track_id = strval($row_track["track_id"] + 1);
+
+        $command = "python3 /var/www/html/track_to_database.py $filename $target_file $username $pouzivatel_id 0 $type $track_id" . " dataset 2>&1";
         exec($command, $output, $return_var);
 
         $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
@@ -76,6 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 //    $turnPenalty = $_POST['turn_penalty_factor'];
 //    $walk = $_POST['type'];
 
+        // Define parameters
         $params = [
             'type' => $type,
             'gps_accuracy' => "5", // Ensure $gpsAccuracy is defined
@@ -86,22 +95,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Convert the parameters array to JSON
         $parametersJson = json_encode($params, JSON_PRETTY_PRINT);
 
-        // Define the input array for the container request
+        // Define the input array for the Python script
         $input = [
             'container' => "valhalla", // Container name
             'username' => $username, // Ensure $username is defined
-            'parameters' => json_decode($parametersJson), // Decode back to array to ensure it's properly structured
+            'parameters' => json_decode($parametersJson, true), // Decode back to array
             'file' => $target_file, // Ensure $gpx_file is defined
-            'filename' => $filename
+            'filename' => $filename,
+            'user_id' => $pouzivatel_id,
+            'track_id' => $track_id
         ];
 
         // Convert the input array to JSON
         $jsonInput = json_encode($input, JSON_PRETTY_PRINT);
 
-        $nodeScript = "node /var/www/html/js/upload.js '$jsonInput'"; // Pass the uploaded file path to Node.js script
+        // Define the Python script command
+        $pythonScript = "python3 /var/www/html/mapmatch.py '$jsonInput'";
 
-        // Execute the Node.js script
-        exec($nodeScript, $output, $return_var);
+        // Execute the Python script
+        exec($pythonScript, $output, $return_var);
 
         echo json_encode(array("status" => "success"));
 

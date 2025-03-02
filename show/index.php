@@ -842,9 +842,16 @@ unset($db);
         match_count = 0;
 
         for (var i in gdata) {
+            var dateObj = new Date(gdata[i][4]);
+            var formattedDate = dateObj.getFullYear() + '-' +
+                String(dateObj.getMonth() + 1).padStart(2, '0') + '-' +
+                String(dateObj.getDate()).padStart(2, '0') + ' ' +
+                String(dateObj.getHours()).padStart(2, '0') + ':' +
+                String(dateObj.getMinutes()).padStart(2, '0') + ':' +
+                String(dateObj.getSeconds()).padStart(2, '0');
             //x+= "<tr><td><div id='mapArea"+i+"' style='width:80px;height:80px;' onclick=\"showTrack("+i+")\"></div></td><td>"+gdata[i][1]+"</td><td>"+gdata[i][2]+"</td><td>"+gdata[i][3]+"</td><td>"+gdata[i][4]+"</td></tr>";
             //x+= "<tr><td><div id='mapArea"+i+"' style='width:80px;height:80px;' onclick=\"showTrack("+i+")\"></div></td><td><div onclick=\"showTrack("+i+")\">Track ID: <b>"+gdata[i][0]+"</b><br>Matched fields: <b>"+gdata[i][1]+"</b> ("+gdata[i][5]+")<br>Starting box: <b>"+gdata[i][2]+"</b><br>Ending box: <b>"+gdata[i][3]+"</b><br>Gaps: <b>"+gdata[i][4]+"</b><br></div></td></tr>"
-            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;' onclick=\"showTrack(" + i + ")\"></div></td><td><div onclick=\"showTrack(" + i + ")\"><h5><b>" + new Date(gdata[i][7]).toISOString().split('T')[0] + "</b></h5>Path stars on box <b>" + gdata[i][2] + "</b> and ends on box <b>" + gdata[i][3] + "</b><br>In total, <b>" + gdata[i][1] + "</b> fields matched, with <b>" + gdata[i][4] + "</b> gaps<br>Matched fields: <b>" + gdata[i][5] + "</b></div></td></tr>";
+            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;padding-top=30%;' onclick=\"showTrack(" + i + ")\"></div></td><td><div onclick=\"showTrack(" + i + ")\"><h6><b>" + formattedDate + "</b></h6>Path stars on box <b>" + gdata[i][2] + "</b> and ends on box <b>" + gdata[i][3] + "</b><br>In total, <b>" + gdata[i][1] + "</b> fields matched, with <b>" + gdata[i][4] + "</b> gaps<br>Matched fields: <b>" + gdata[i][5] + "</b></div></td></tr>";
             graph2_array[1].push(i);
             graph2_array[0].push(gdata[i][1]);
             for (var j in gdata[i][5]) {
@@ -855,7 +862,7 @@ unset($db);
         graph_array.sort();
 
         for (var i in graph_array) {
-            if (graph_array[i] == point) {
+            if (graph_array[i] === point) {
                 count = count + 1;
                 //console.log(graph_array[i]);
             } else {
@@ -867,11 +874,11 @@ unset($db);
         }
 
         for (var i in graph2_array[0]) {
-            if (i == 0) {
+            if (i === 0) {
                 match_number = graph2_array[0][i];
                 match_count++;
             } else {
-                if (match_number == graph2_array[0][i]) {
+                if (match_number === graph2_array[0][i]) {
                     match_count++;
                 } else {
                     graph2_x_axis.push(match_number);
@@ -895,7 +902,6 @@ unset($db);
                 y: graph_y_axis[i]
             });
         }
-        ;
 
         for (var i in graph2_x_axis) {
             dps2.push({
@@ -1170,7 +1176,14 @@ unset($db);
         match_count = 0;
 
         for (var i in gdata) {
-            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;' onclick=\"showTrack1(" + i + ")\"></div></td><td><div onclick=\"showTrack1(" + i + ")\"><h6><b>" + new Date(gdata[i][4]).toISOString().split('T')[0] + "</b></h6>Mapmatched: <b>" + gdata[i][2] + "</b><br>Type: <b>" + gdata[i][3] + "</b><br> Length: <b>" + gdata[i][5] + " m</div></td></tr>";
+            var dateObj = new Date(gdata[i][4]);
+            var formattedDate = dateObj.getFullYear() + '-' +
+                String(dateObj.getMonth() + 1).padStart(2, '0') + '-' +
+                String(dateObj.getDate()).padStart(2, '0') + ' ' +
+                String(dateObj.getHours()).padStart(2, '0') + ':' +
+                String(dateObj.getMinutes()).padStart(2, '0') + ':' +
+                String(dateObj.getSeconds()).padStart(2, '0');
+            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;padding-top=30%;' onclick=\"showTrack1(" + i + ")\"></div></td><td><div onclick=\"showTrack1(" + i + ")\"><h6><b>" + formattedDate + "</b><br>Type: <b>" + gdata[i][3] + "</b><br> Length: <b>" + gdata[i][5] + " m</div></td></tr>";
         }
 
         $("#totalfound").html(gdata.length);

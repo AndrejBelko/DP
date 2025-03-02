@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(128) NOT NULL,
     email VARCHAR(256) NOT NULL,
-    password VARCHAR(512) NOT NULL);
+    password VARCHAR(512) NOT NULL,
+    token VARCHAR(256) DEFAULT NULL);
 
 
 CREATE TABLE `hashcode`.`files` (
