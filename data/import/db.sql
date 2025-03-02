@@ -31,7 +31,7 @@ CREATE TABLE `hashcode`.`path` (
   `type` varchar(16) NOT NULL,
   `timestamp` TIMESTAMP NOT NULL,
   `length` FLOAT NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 ALTER TABLE `hashcode`.`path` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -39,6 +39,7 @@ DROP TABLE IF EXISTS `hashcode`.`tracks`;
 CREATE TABLE `hashcode`.`tracks` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `user_id` INT UNSIGNED NOT NULL,
+  `track_id` INT UNSIGNED NOT NULL,
   `filename` varchar(250) NOT NULL,
   `track` mediumtext NOT NULL,
   `mapmatched` varchar(80) NOT NULL,

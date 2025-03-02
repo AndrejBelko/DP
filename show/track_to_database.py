@@ -163,12 +163,12 @@ if "LONGITUDE E/W" in df.columns:
     df['longitude'] = df['longitude'].astype(float)
 
 print(f"Generating geojsons for {len(grouped)} tracks into {dbName}_track.csv...")
-for id, values in grouped:
+for track_id, values in grouped:
     trajectory_length = haversine_vectorized(np.array(values['latitude']), np.array(values['longitude']))
-    tracks.append([user_id, file_name, str(geojson.Feature(geometry=geojson.LineString(values[["longitude", "latitude"]].values.tolist()))), mapmatched, type, timestamp, trajectory_length])
+    tracks.append([user_id, track_id, file_name, str(geojson.Feature(geometry=geojson.LineString(values[["longitude", "latitude"]].values.tolist()))), mapmatched, type, timestamp, trajectory_length])
     row += 1
     if row > 10000:
-        dx2 = pd.DataFrame(tracks, columns=['user_id', 'filename', 'track', 'mapmatched', "type", 'timestamp', "length"])
+        dx2 = pd.DataFrame(tracks, columns=['user_id', 'track_id', 'filename', 'track', 'mapmatched', "type", 'timestamp', "length"])
         #dx.to_csv(f"{directory_path}/{dbName}_track.csv", header=False, index=False, sep=';',
         #          quoting=csv.QUOTE_NONE, mode="a")
         row = 0
@@ -177,7 +177,7 @@ for id, values in grouped:
         print(str(total * 10) + "k tracks done...")
 
 # Write the final batch of tracks
-dx2 = pd.DataFrame(tracks, columns=['user_id', 'filename', 'track', 'mapmatched', "type", 'timestamp', "length"])
+dx2 = pd.DataFrame(tracks, columns=['user_id', 'track_id', 'filename', 'track', 'mapmatched', "type", 'timestamp', "length"])
 # dx.to_csv(f"{directory_path}/{dbName}_track.csv", header=False, index=False, sep=';', quoting=csv.QUOTE_NONE, mode="a")
 
 print("GeoJSON track generation complete.")
@@ -245,12 +245,12 @@ mycursor.executemany(sql, data)
 mydb.commit()
 
 sql = """
-INSERT INTO tracks (user_id, filename, track, mapmatched, type, timestamp, length)
-VALUES (%s, %s, %s, %s, %s, %s, %s)
+INSERT INTO tracks (user_id, track_id, filename, track, mapmatched, type, timestamp, length)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
 """
 
 # Prepare Data
-data = list(dx2[['user_id', 'filename', 'track', 'mapmatched', 'type', 'timestamp', 'length']].itertuples(index=False, name=None))
+data = list(dx2[['user_id', 'track_id', 'filename', 'track', 'mapmatched', 'type', 'timestamp', 'length']].itertuples(index=False, name=None))
 
 # Execute Batch Insert
 mycursor.executemany(sql, data)

@@ -86,8 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $stmt = $db->prepare($sql);
                     $stmt->bindParam(":user_id", $pouzivatel_id, PDO::PARAM_STR);
                     $stmt->execute();
-                    $row = $stmt->fetch();
-                    $track_id = strval($row["track_id"] + 1);
+                    $row_track = $stmt->fetch();
+                    $track_id = strval($row_track["track_id"] + 1);
 
                     $sql = "INSERT INTO files (user_id, name, path) VALUES (:pouzivatel_id, :nazov, :cesta)";
                     $stmt = $db->prepare($sql);
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $command = escapeshellcmd("python3 /var/www/html/track_to_database.py $filename $csv_file $username $pouzivatel_id 0 $type $track_id" . " dataset");
 
                     $output = shell_exec($command . " 2>&1");
-
+                    var_dump($output);
                     $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
                     exec($command, $output, $return_var);
 
@@ -369,7 +369,7 @@ unset($db);
                             for ($i = 0; $i < count($row); $i += 2) {
                                 $row_tmp = $row[$i]; // Access every second element
                                 echo "<tr>";
-                                echo "<td>" . $row_tmp['route'] / 2 . "</td>";
+                                echo "<td>" . $row_tmp['track_id'] . "</td>";
                                 echo "<td>" . $row_tmp['filename'] . "</td>";
                                 echo "<td>" . $row_tmp['timestamp'] . "</td>";
                                 if ($row_tmp['type'] === 'Walk') {
@@ -380,15 +380,15 @@ unset($db);
                                     echo $row_tmp['type']; // Fallback for other types
                                 }
                                 echo "<td>
-            <a href='delete.php?route=" . urlencode($row_tmp['route']) . "' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
-            <a href='download.php?route=" . urlencode($row_tmp['route']) . "' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
+            <a href='delete.php?track_id=" . urlencode($row_tmp['track_id']) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
+            <a href='download.php?track_id=" . urlencode($row_tmp['track_id']) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
           </td>";
                                 // Ensure `$i + 1` exists before accessing it
                                 if (isset($row[$i + 1])) {
                                     $next_row = $row[$i + 1]; // Access the next element for `$i + 1`
                                     echo "<td>
-                <a href='delete.php?route=" . urlencode($next_row['route']) . "' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
-                <a href='download.php?route=" . urlencode($next_row['route']) . "' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
+                <a href='delete.php?track_id=" . urlencode($next_row['track_id']) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
+                <a href='download.php?track_id=" . urlencode($next_row['track_id']) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
               </td>";
                                 } else {
                                     echo "<td>—</td>"; // Placeholder if there is no `$i + 1`

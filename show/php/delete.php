@@ -17,52 +17,51 @@ if (!isset($_SESSION["username"]) || $_SESSION["loggedin"] !== true) {
 
 $username1 = $_SESSION["username"];
 
-if (isset($_GET['route'])) {
+if (isset($_GET['user_id']) && isset($_GET['track_id'])) {
     // Sanitize the 'route' parameter
-    $route = (int) htmlspecialchars($_GET['route']); // Cast to int for safety
+    $track_id = (int) htmlspecialchars($_GET['track_id']); // Cast to int for safety
+    $user_id = (int) htmlspecialchars($_GET['user_id']); // Cast to int for safety
+
+    if ($_SESSION['user_id'] != $user_id) {
+        header("Location: profile.php");
+        exit;
+    }
 
     try {
         // Connect to the database
-        $db = new PDO("mysql:host=$hostname;dbname=$username1", $username, $password);
+        $db = new PDO("mysql:host=$hostname;dbname=$dbname", $username, $password);
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        // Determine the second ID to delete based on parity of the route
-        $secondaryRoute = ($route % 2 === 0) ? $route + 1 : $route - 1;
-
         // Prepare and execute DELETE statements for the database
-        $sql = "DELETE FROM tracks WHERE route = :route";
+        $sql = "DELETE FROM tracks WHERE track_id = :track_id and user_id = :user_id";
         $stmt = $db->prepare($sql);
 
-        $stmt->bindParam(':route', $route, PDO::PARAM_INT);
+        $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+        $stmt->bindParam(':track_id', $track_id, PDO::PARAM_INT);
         $stmt->execute();
 
-        $stmt->bindParam(':route', $secondaryRoute, PDO::PARAM_INT);
-        $stmt->execute();
-
-        $sql = "DELETE FROM path WHERE track = :track";
+        $sql = "DELETE FROM path WHERE track_id = :track_id and user_id = :user_id";
         $stmt = $db->prepare($sql);
 
-        $stmt->bindParam(':track', $route, PDO::PARAM_INT);
+        $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+        $stmt->bindParam(':track_id', $track_id, PDO::PARAM_INT);
         $stmt->execute();
 
-        $stmt->bindParam(':track', $secondaryRoute, PDO::PARAM_INT);
-        $stmt->execute();
-
-        $filePath1 = '/home/data/import/files/db/'. $username1 . '/' . $username1 . '_track.csv';
-        deleteCSV($filePath1);
-        createCSV($filePath1,$db, "tracks");
-
-        $filePath2 = '/home/data/import/files/db/' . $username1 . '/' . $username1 . '_path.csv';
-        deleteCSV($filePath2);
-        createCSV($filePath2,$db, "path");
-
-        // Execute external Python script
-        if (file_exists($filePath2)){
-            $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username1);
-            exec($command, $output, $return_var);
-        } else{
-            unlink('/var/www/html/coverage/'.$username1.'.geojson');
-        }
+//        $filePath1 = '/home/data/import/files/db/'. $username1 . '/' . $username1 . '_track.csv';
+//        deleteCSV($filePath1);
+//        createCSV($filePath1,$db, "tracks");
+//
+//        $filePath2 = '/home/data/import/files/db/' . $username1 . '/' . $username1 . '_path.csv';
+//        deleteCSV($filePath2);
+//        createCSV($filePath2,$db, "path");
+//
+//        // Execute external Python script
+//        if (file_exists($filePath2)){
+//            $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username1);
+//            exec($command, $output, $return_var);
+//        } else{
+//            unlink('/var/www/html/coverage/'.$username1.'.geojson');
+//        }
 
     } catch (PDOException $e) {
         echo "Database error: " . $e->getMessage();
@@ -70,8 +69,8 @@ if (isset($_GET['route'])) {
         unset($stmt); // Clean up
         unset($db);   // Close the connection
         // Uncomment for redirection after testing
-         header("Location: profile.php");
-         exit;
+        header("Location: profile.php");
+        exit;
     }
 } else {
     echo "No route specified for deletion.";
