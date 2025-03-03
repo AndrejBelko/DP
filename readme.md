@@ -66,6 +66,7 @@ ex: docker container exec -it search_gps /bin/bash
 After that, you need to start Apache2 server and MySQL. You also need to import some settings to MySQL:
 
 ```
+apt install php-zip
 service apache2 start
 service mysql start
 mysql -u root < /home/data/import/db.sql

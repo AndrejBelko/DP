@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $infomsg = "Failed to move the uploaded file.";
             }
         }
-    } elseif ($_POST['secToken']){
+    } elseif ($_POST['secToken']) {
         $sql = "UPDATE users SET token = :token WHERE id = :id";
 
         // Retrieve values from POST or other sources
@@ -168,6 +168,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Execute the query
         $stmt->execute();
 
+    } elseif ($_POST['action']){
+        $track_ids = $_POST['track_ids']; // Get selected track IDs
+        $action = $_POST['action'];
+
+        if (!empty($track_ids)) {
+            if ($action === "download") {
+                $queryString = http_build_query(['track_ids' => $track_ids]);
+                header("Location: download.php?$queryString&user_id=$_SESSION[user_id]");
+            } elseif ($action === "delete") {
+                // Convert array to query string
+                $queryString = http_build_query(['track_ids' => $track_ids]);
+                header("Location: delete.php?$queryString&user_id=$_SESSION[user_id]");
+            }
+        } else {
+            $infomsg = "No file selected or an error occurred.";
+        }
     } else {
         $infomsg = "No file uploaded or an error occurred.";
     }
@@ -320,8 +336,9 @@ unset($db);
 <div class="container mt-5">
     <div class="row text-center justify-content-center">
         <div class="col-md-6">
-            <button class="mt-4 mb-3 btn btn-primary btn-sm btn-collapse" onclick="showElement('upload-hodinky')"><strong>Nahraj udaje z hodiniek
-                        (.csv)</strong>
+            <button class="mt-4 mb-3 btn btn-primary btn-sm btn-collapse" onclick="showElement('upload-hodinky')">
+                <strong>Nahraj udaje z hodiniek
+                    (.csv)</strong>
             </button>
             <div style="display: none" id="upload-hodinky" class="text-center justify-content-center">
                 <form action="profile.php" method="post" enctype="multipart/form-data">
@@ -343,8 +360,9 @@ unset($db);
             </div>
         </div>
         <div class="col-md-6 text-center justify-content-center">
-            <button class="mt-4 mb-3 btn btn-primary btn-sm" onclick="showElement('upload-trex')"><strong>Nahraj udaje z T-REXu
-                        (.gpx)</strong>
+            <button class="mt-4 mb-3 btn btn-primary btn-sm" onclick="showElement('upload-trex')"><strong>Nahraj udaje z
+                    T-REXu
+                    (.gpx)</strong>
             </button>
             <div style="display: none" id="upload-trex" class="text-center justify-content-center">
                 <form action="profile.php" method="post" enctype="multipart/form-data">
@@ -369,134 +387,145 @@ unset($db);
             </div>
         </div>
     </div>
-    <div class="container mt-5">
-        <div class="row">
-            <div class="col-12 col-md-10 mx-auto">
-                <div class="table-wrapper">
-                    <table class="table table-striped table-bordered">
-                        <thead class="table-dark">
-                        <tr>
-                            <th>ID</th>
-                            <th>Filename</th>
-                            <th>Timestamp</th>
-                            <th>Type</th>
-                            <th>Original</th>
-                            <th>Mapmatched</th>
-                            <th>Info</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php
-                        if (!$err) {
-                            for ($i = 0; $i < count($row); $i += 2) {
-                                $row_tmp = $row[$i]; // Access every second element
-                                echo "<tr>";
-                                echo "<td>" . $row_tmp['track_id'] . "</td>";
-                                echo "<td>" . $row_tmp['filename'] . "</td>";
-                                echo "<td>" . $row_tmp['timestamp'] . "</td>";
-                                if ($row_tmp['type'] === 'Walk') {
-                                    echo "<td>" . '<i class="bi bi-person"></i>' . "</td>"; // Bootstrap person icon
-                                } elseif ($row_tmp['type'] === 'Drive') {
-                                    echo "<td>" . '<i class="bi bi-car-front"></i>' . "</td>"; // Bootstrap car icon
-                                } else {
-                                    echo $row_tmp['type']; // Fallback for other types
-                                }
-                                echo "<td>
-            <a href='delete.php?track_id=" . urlencode($row_tmp['track_id']) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
-            <a href='download.php?track_id=" . urlencode($row_tmp['track_id']) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
-          </td>";
-                                // Ensure `$i + 1` exists before accessing it
-                                if (isset($row[$i + 1])) {
-                                    $next_row = $row[$i + 1]; // Access the next element for `$i + 1`
+    <form id="actionForm" method="POST" action="profile.php">
+        <div class="container mt-5">
+            <div class="row">
+                <div class="col-12 col-md-10 mx-auto">
+                    <div class="table-wrapper">
+                        <table class="table table-striped table-bordered">
+                            <thead class="table-dark">
+                            <tr>
+                                <th>Select</th>
+                                <th>ID</th>
+                                <th>Filename</th>
+                                <th>Timestamp</th>
+                                <th>Type</th>
+                                <th>Original</th>
+                                <th>Mapmatched</th>
+                                <th>Info</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            if (!$err) {
+                                for ($i = 0; $i < count($row); $i += 2) {
+                                    $row_tmp = $row[$i]; // Access every second element
+                                    echo "<tr>";
+                                    echo "<td><input type='checkbox' name='track_ids[]' value='" . $row_tmp['track_id'] . "'></td>";
+                                    echo "<td>" . $row_tmp['track_id'] . "</td>";
+                                    echo "<td>" . $row_tmp['filename'] . "</td>";
+                                    echo "<td>" . $row_tmp['timestamp'] . "</td>";
+                                    if ($row_tmp['type'] === 'Walk') {
+                                        echo "<td>" . '<i class="bi bi-person"></i>' . "</td>";
+                                    } elseif ($row_tmp['type'] === 'Drive') {
+                                        echo "<td>" . '<i class="bi bi-car-front"></i>' . "</td>";
+                                    } else {
+                                        echo $row_tmp['type']; // Fallback for other types
+                                    }
                                     echo "<td>
-                <a href='delete.php?track_id=" . urlencode($next_row['track_id']) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
-                <a href='download.php?track_id=" . urlencode($next_row['track_id']) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
-              </td>";
-                                } else {
-                                    echo "<td>—</td>"; // Placeholder if there is no `$i + 1`
+                                    <a href='delete.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
+                                    <a href='download.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
+                                  </td>";
+
+                                    if (isset($row[$i + 1])) {
+                                        $next_row = $row[$i + 1];
+                                        echo "<td>
+                                        <a href='delete.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
+                                        <a href='download.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
+                                      </td>";
+                                    } else {
+                                        echo "<td>—</td>"; // Placeholder if there is no `$i + 1`
+                                    }
+
+                                    echo "<td>
+                                    <div class='btn btn-sm btn-info' onclick='loadGPSData(\"" . $row_tmp['filename'] . "\")'><i class='bi bi-info'></i></div>
+                                  </td>";
+                                    echo "</tr>";
                                 }
-                                echo "<td>
-                                <div class='btn btn-sm btn-info' onclick='loadGPSData(" . '"' . $row_tmp['filename'] . '"' . ")'><i class='bi bi-info'></i></div>
-                                </td>";
-                                echo "</tr>";
                             }
-                        }
+                            ?>
+                            </tbody>
+                        </table>
 
-                        echo "</table>";
-                        ?>
-                        </tbody>
-                    </table>
+                        <!-- Buttons for actions -->
+                        <button type="submit" name="action" value="download" class="btn btn-success mt-2">Download Selected</button>
+                        <button type="submit" name="action" value="delete" class="btn btn-danger mt-2">Delete Selected</button>
+                    </div>
                 </div>
             </div>
         </div>
-        <div id="speedchart" class="chartdiv"></div>
-        <div id="heightchart" class="chartdiv"></div>
+    </form>
+
+    <div id="speedchart" class="chartdiv"></div>
+    <div id="heightchart" class="chartdiv"></div>
+</div>
+<!-- Toast Container -->
+<div class="toast-container p-3 top-0 start-50 translate-middle-x">
+    <div id="errorToast" class="toast bg-danger" role="alert" aria-live="assertive" aria-atomic="true"
+         data-bs-autohide="true">
+        <div class="toast-header">
+            <strong class="me-auto">Error</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            <?php echo $infomsg; ?>
+        </div>
     </div>
-    <!-- Toast Container -->
-    <div class="toast-container p-3 top-0 start-50 translate-middle-x">
-        <div id="errorToast" class="toast bg-danger" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true">
-            <div class="toast-header">
-                <strong class="me-auto">Error</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container p-3 top-0 start-50 translate-middle-x">
+    <div id="successToast" class="toast bg-success" role="alert" aria-live="assertive" aria-atomic="true"
+         data-bs-autohide="true">
+        <div class="toast-header">
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            Načítanie prebehlo úspešne.
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="toast-body">
-                <?php echo $infomsg; ?>
+            <!-- Modal -->
+            <div class="modal-body">
+                <form action="profile.php" method="post" id="formSecToken">
+                    <label for="secToken">Vložte svoj bezpečnostný token:</label>
+                    <input type="text" id="secToken" name="secToken" class="form-control" placeholder="123XYZ">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary" form="formSecToken">Save changes</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Toast Container -->
-    <div class="toast-container p-3 top-0 start-50 translate-middle-x">
-        <div id="successToast" class="toast bg-success" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true">
-            <div class="toast-header">
-                <strong class="me-auto">Success</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-            <div class="toast-body">
-                Načítanie prebehlo úspešne.
-            </div>
-        </div>
-    </div>
+<!-- Bootstrap JS (with Popper.js) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Modal -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <!-- Modal -->
-                <div class="modal-body">
-                    <form action="profile.php" method="post" id="formSecToken">
-                        <label for="secToken">Vložte svoj bezpečnostný token:</label>
-                        <input type="text" id="secToken" name="secToken" class="form-control" placeholder="123XYZ">
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary" form="formSecToken">Save changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap JS (with Popper.js) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <?php if (!empty($infomsg)) : ?>
-        <script>
-            // Show the toast if $errmsg is not empty
-            const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
-            errorToast.show();
-        </script>
-    <?php elseif ($infomsg === ""): ?>
-        <script>
-            // Show the toast if $errmsg is not empty
-            const errorToast = new bootstrap.Toast(document.getElementById('successToast'));
-            errorToast.show();
-        </script>
-    <?php endif; ?>
+<?php if (!empty($infomsg)) : ?>
+    <script>
+        // Show the toast if $errmsg is not empty
+        const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+        errorToast.show();
+    </script>
+<?php elseif ($infomsg === ""): ?>
+    <script>
+        // Show the toast if $errmsg is not empty
+        const errorToast = new bootstrap.Toast(document.getElementById('successToast'));
+        errorToast.show();
+    </script>
+<?php endif; ?>
 </div>
 
 <!-- Include Bootstrap JS (optional, for advanced interactions) -->
@@ -504,10 +533,11 @@ unset($db);
 </body>
 </html>
 <script>
-    document.getElementById("token").addEventListener('click', function() {
+    document.getElementById("token").addEventListener('click', function () {
         const errorToast = new bootstrap.Toast(document.getElementById('tokenToast'));
         errorToast.show();
     });
+
     function drawTrackScaledWithoutZoom(coordinates, svgWidth, svgHeight, i) {
         // Find the minimum and maximum values for x and y coordinates.
         let minX = coordinates[0][0], maxX = coordinates[0][0];

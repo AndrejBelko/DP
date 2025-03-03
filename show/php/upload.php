@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute();
 
         if ($stmt->rowCount() != 1) {
-            throw new Exception("User does not exists.", 404);
+            throw new Exception("User does not exist.", 404);
         }
 
         $row = $stmt->fetch();

@@ -15,82 +15,96 @@ if (!isset($_SESSION["username"]) || $_SESSION["loggedin"] !== true) {
     exit;
 }
 
-$username1 = $_SESSION["username"];
+echo 1;
 
-if (isset($_GET['route'])) {
-    // Sanitize the 'route' parameter
-    $route = (int) htmlspecialchars($_GET['route']); // Cast to int for safety
-
+if (isset($_GET['user_id']) && isset($_GET['track_ids'])) {
+    echo 1;
     try {
-        // Connect to the database
-        $db = new PDO("mysql:host=$hostname;dbname=$username1", $username, $password);
+        echo 1;
+        $db = new PDO("mysql:host=$hostname;dbname=$dbname", $username, $password);
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        // Fetch the geometry data from the database
-        $sql = "SELECT * FROM tracks WHERE route = :route";
-        $stmt = $db->prepare($sql);
-        $stmt->bindParam(':route', $route, PDO::PARAM_INT);
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$row) {
-            die("Error: Route not found in the database.");
+        echo 1;
+        // Sanitize the 'user_id' parameter
+        $user_id = (int) htmlspecialchars($_GET['user_id']); // Cast to int for safety
+        echo 1;
+        // Security check: Ensure the session user is the same
+        if ($_SESSION['user_id'] != $user_id) {
+            header("Location: profile.php");
+            exit;
         }
-
-        // Decode the GeoJSON data
-        $geojson = json_decode($row['track'], true);
-
-        if (!isset($geojson['geometry']['coordinates'])) {
-            die("Error: Invalid GeoJSON data.");
+        echo 1;
+        $track_ids = $_GET['track_ids']; // Get the array of track IDs
+        $zipFileName = "routes_" . time() . ".zip"; // Unique ZIP file name
+        $zipFilePath = "/tmp/$zipFileName"; // Store ZIP in a temporary location
+        echo 1;
+        $zip = new ZipArchive();
+        if ($zip->open($zipFilePath, ZipArchive::CREATE) !== TRUE) {
+            die("Error: Unable to create ZIP file.");
         }
+        foreach ($track_ids as $track_id) {
+            $track_id = (int) $track_id; // Ensure it's an integer
 
-        $coordinates = $geojson['geometry']['coordinates'];
+            // Fetch the geometry data from the database
+            $sql = "SELECT * FROM tracks WHERE track_id = :track_id AND user_id = :user_id";
+            $stmt = $db->prepare($sql);
+            $stmt->bindParam(':track_id', $track_id, PDO::PARAM_INT);
+            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Create a CSV file
-        $fileName = "route_$route.csv";
-        $filePath = "/tmp/$fileName"; // Use a temporary directory
-        $fileHandle = fopen($filePath, 'w');
-        if (!$fileHandle) {
-            die("Error: Unable to create CSV file.");
-        }
-
-        // Write the header row
-        fputcsv($fileHandle, ['Longitude', 'Latitude']);
-
-        // Write the coordinates to the CSV file
-        foreach ($coordinates as $coordinate) {
-            if (is_array($coordinate) && count($coordinate) === 2) {
-                fputcsv($fileHandle, $coordinate);
+            if (!$row) {
+                continue; // Skip this track if not found
             }
+
+            // Decode the GeoJSON data
+            $geojson = json_decode($row['track'], true);
+            if (!isset($geojson['geometry']['coordinates'])) {
+                continue; // Skip invalid tracks
+            }
+
+            $coordinates = $geojson['geometry']['coordinates'];
+
+            // Create a CSV file in memory
+            $csvContent = "Longitude,Latitude\n"; // Header row
+            foreach ($coordinates as $coordinate) {
+                if (is_array($coordinate) && count($coordinate) === 2) {
+                    $csvContent .= implode(",", $coordinate) . "\n";
+                }
+            }
+
+            // Add CSV file to ZIP
+            $csvFileName = "route_$track_id.csv"; // Name each CSV uniquely
+            $zip->addFromString($csvFileName, $csvContent);
         }
 
-        // Close the file
-        fclose($fileHandle);
+        // Close ZIP file
+        $zip->close();
 
-        // Serve the file for download
-        if (file_exists($filePath)) {
-            header('Content-Type: text/csv');
-            header('Content-Disposition: attachment; filename="' . $fileName . '"');
-            header('Content-Length: ' . filesize($filePath));
+        // Serve the ZIP file for download
+        if (file_exists($zipFilePath)) {
+            header('Content-Type: application/zip');
+            header('Content-Disposition: attachment; filename="' . $zipFileName . '"');
+            header('Content-Length: ' . filesize($zipFilePath));
             ob_clean();
             flush();
-            readfile($filePath);
+            readfile($zipFilePath);
 
-            // Optionally delete the file after download
-            unlink($filePath);
+            // Delete the ZIP file after download
+            unlink($zipFilePath);
             exit;
         } else {
-            die("Error: File could not be created.");
+            die("Error: ZIP file could not be created.");
         }
-
     } catch (PDOException $e) {
         echo "Database error: " . $e->getMessage();
     } finally {
-        unset($stmt); // Clean up
-        unset($db);   // Close the connection
-        header("Location: profile.php");
-        exit;
+        unset($stmt);
+        unset($db);
+//            header("Location: profile.php");
+//            exit;
     }
+
+
 } else {
     echo "No route specified for download.";
 }
