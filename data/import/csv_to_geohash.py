@@ -25,7 +25,69 @@ def haversine_vectorized(latitudes, longitudes):
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
     return np.sum(R * c)
 
+
+def insertUser(dbname):
+    mydb = mysql.connector.connect(
+            host="localhost",
+            user="search",
+            database="hashcode",
+            password="password"
+        )
+    mycursor = mydb.cursor()
+    sql = """INSERT INTO users (username)
+                 VALUES (%s)"""
+
+        # Sample data (replace with real values)
+    user_data = (dbname,)
+
+    # Execute the query
+    mycursor.execute(sql, user_data)
+
+    # Commit the changes
+    mydb.commit()
+
+    # SQL query to select the ID where username = dbname
+    sql = "SELECT id FROM users WHERE username = %s"
+    mycursor.execute(sql, (dbname,))
+
+    # Fetch the result
+    result = mycursor.fetchone()
+
+    user_id = result[0]  # Extract the ID from the tuple
+
+    mycursor.close()
+    mydb.disconnect()
+
+    return user_id
+
+
+def getTrackId(user_id):
+    mydb = mysql.connector.connect(
+                host="localhost",
+                user="search",
+                database="hashcode",
+                password="password"
+            )
+    mycursor = mydb.cursor()
+
+    # Get max track_id for the user
+    sql = "SELECT MAX(track_id) FROM path WHERE user_id = %s"
+    mycursor.execute(sql, (user_id,))
+    result = mycursor.fetchone()
+
+    # Handle case where user has no previous tracks
+    track_id = (result[0] + 1) if result[0] is not None else 1
+
+    # Cleanup
+    mycursor.close()
+    mydb.disconnect()  # Fixed disconnect()
+
+    return track_id
+
+
 def csvToGeohash(csvPath, dbName, title, directory_path):
+    user_id = insertUser(dbName)
+    track_id = getTrackId(user_id)
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print("reading dataset ...")
     df = pd.read_csv(csvPath)
@@ -38,10 +100,10 @@ def csvToGeohash(csvPath, dbName, title, directory_path):
     lon_col = df.columns.get_loc("longitude")
     track_col = df.columns.get_loc("track")
     geohash = []
-    dx = pd.DataFrame(geohash, columns=["geohash","track", "mapmatched", "timestamp", "length"])
+    dx1 = pd.DataFrame(geohash, columns=["user_id", "geohash", "track_id", "mapmatched", "type", "timestamp", "length"])
     if not os.path.isdir(directory_path):
             os.makedirs(directory_path)
-    dx.to_csv(f"{directory_path}/{dbName}_path.csv", index=False, mode="w")
+    dx1.to_csv(f"{directory_path}/{dbName}_path.csv", sep=';', index=False, mode="w")
     row = 0
     total = 0
     print(track_col)
@@ -58,9 +120,11 @@ def csvToGeohash(csvPath, dbName, title, directory_path):
         # Add rows for each point in the track
         for _, row_data in values.iterrows():
             geohash.append([
+                user_id,
                 gh.encode(row_data['latitude'], row_data['longitude'], precision=7),  # Generate geohash
                 track_id,  # Track ID
                 0,  # Mapmatched flag (placeholder)
+                "Drive",
                 timestamp,  # Current timestamp
                 trajectory_length  # Total track length
             ])
@@ -68,37 +132,37 @@ def csvToGeohash(csvPath, dbName, title, directory_path):
 
         # Write to file in batches
         if row > 1000000:
-            dx = pd.DataFrame(geohash, columns=["geohash", "track", "mapmatched", "timestamp", "length"])
-            dx.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, index=False, mode="a")
+            dx1 = pd.DataFrame(geohash, columns=["user_id", "geohash", "track_id", "mapmatched", "type", "timestamp", "length"])
+            dx1.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, sep=';', index=False, mode="a")
             row = 0
             geohash = []
             total += 1
 
-    dx = pd.DataFrame(geohash, columns=["geohash","track", "mapmatched","timestamp", "length"])
-    dx.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, index=False, mode="a")
+    dx1 = pd.DataFrame(geohash, columns=["user_id", "geohash", "track_id", "mapmatched", "type","timestamp", "length"])
+    dx1.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, sep=';', index=False, mode="a")
 
     #track.csv
     tracks = []
-    dx = pd.DataFrame(tracks, columns=['route', 'track', "mapmatched", "timestamp", "length"])
-    dx.to_csv(f"{directory_path}/{dbName}_track.csv", index=False, sep=';', quoting=csv.QUOTE_NONE, mode="w")
+    dx2 = pd.DataFrame(tracks, columns=['user_id', 'track_id', 'filename', 'track', 'mapmatched', "type",  "timestamp", "length"])
+    dx2.to_csv(f"{directory_path}/{dbName}_track.csv", index=False, sep=';', quoting=csv.QUOTE_NONE, mode="w")
     row = 0
     total = 0
     grouped = df.groupby('track')
     print("Generating geojsons for "+str(len(grouped))+" tracks into track.csv ...")
     for id, values in grouped:
         trajectory_length = haversine_vectorized(np.array(values['latitude']), np.array(values['longitude']))
-        tracks.append([id, str(geojson.Feature(geometry=geojson.LineString(values[["longitude", "latitude"]].values.tolist()))), 0, timestamp, trajectory_length])
+        tracks.append([user_id, track_id, dbName, str(geojson.Feature(geometry=geojson.LineString(values[["longitude", "latitude"]].values.tolist()))), 0, "Drive", timestamp, trajectory_length])
         row+=1
         if row>10000:
-            dx = pd.DataFrame(tracks, columns=['route', 'track', "mapmatched", "timestamp", "length"])
-            dx.to_csv(f"{directory_path}/{dbName}_track.csv", header=False, index=False, sep=';', quoting=csv.QUOTE_NONE, mode="a")
+            dx2 = pd.DataFrame(tracks, columns=['user_id', 'track_id', 'filename', 'track', 'mapmatched', "type",  "timestamp", "length"])
+            dx2.to_csv(f"{directory_path}/{dbName}_track.csv", header=False, index=False, sep=';', quoting=csv.QUOTE_NONE, mode="a")
             row = 0
             tracks = []
             total +=1
             print(str(total*10)+"k tracks done...")
 
-    dx = pd.DataFrame(tracks, columns=['route', 'track', "mapmatched", "timestamp", "length"])
-    dx.to_csv(f"{directory_path}/{dbName}_track.csv", header=False, index=False, sep=';', quoting=csv.QUOTE_NONE, mode="a")
+    dx2 = pd.DataFrame(tracks, columns=['user_id', 'track_id', 'filename', 'track', 'mapmatched', "type",  "timestamp", "length"])
+    dx2.to_csv(f"{directory_path}/{dbName}_track.csv", header=False, index=False, sep=';', quoting=csv.QUOTE_NONE, mode="a")
 
     print("Generating db info...")
     #latlon_median.csv
@@ -106,58 +170,51 @@ def csvToGeohash(csvPath, dbName, title, directory_path):
     with open(f"/var/www/html/center/{dbName}.json", 'w') as outfile:
         outfile.write(json.dumps(mapconfig))
 
-def importData(dbName, directory_path):
-    print("creating database...")
-    mydb = mysql.connector.connect(
-        host="localhost",
-        user="search",
-        password="password"
-    )
-    mycursor = mydb.cursor()
-    mycursor.execute("CREATE DATABASE IF NOT EXISTS `"+dbName+"` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;")
-    mycursor.close()
-    mydb.disconnect()
+    return dx1, dx2
 
+def importData(dx1, dx2, dbName, directory_path):
+    print("creating database...")
     mydb = mysql.connector.connect(
         host="localhost",
         user="root",
         password="root",
-        database=dbName,
-        allow_local_infile=True
+        database="hashcode",
+        allow_local_infile=True  # Ensure that local_infile is enabled
     )
     mycursor = mydb.cursor()
-    mycursor.execute("DROP TABLE IF EXISTS `path`;")
-    mycursor.execute("""
-        CREATE TABLE `path` (
-            `id` int(11) NOT NULL AUTO_INCREMENT,
-            `hash` varchar(7) NOT NULL,
-            `track` varchar(80) NOT NULL,
-            `mapmatched` varchar(80) NOT NULL,
-            `timestamp` TIMESTAMP NOT NULL,
-            `length` FLOAT NOT NULL,
-            PRIMARY KEY (`id`),
-            KEY `ihash` (`hash`)
-        ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-    """)
-    mycursor.execute("DROP TABLE IF EXISTS `tracks`;")
-    mycursor.execute("""
-        CREATE TABLE `tracks` (
-            `route` varchar(250) NOT NULL,
-            `track` mediumtext NOT NULL,
-            `mapmatched` varchar(80) NOT NULL,
-            `timestamp` TIMESTAMP NOT NULL,
-            `length` FLOAT NOT NULL,
-            PRIMARY KEY (`route`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    """)
-    mycursor.execute("SET GLOBAL local_infile=1;")
-    print("importing tracks ...")
-    mycursor.execute(f"load data local infile '{directory_path}/{dbName}_path.csv' into table `path` fields terminated by ',' lines terminated by '\n' ignore 1 lines (`hash`, `track`, `mapmatched`,`timestamp`,`length`);")
-    print("importing geojsons ...")
-    mycursor.execute(f"load data local infile '{directory_path}/{dbName}_track.csv' into table `tracks` fields terminated by ';' lines terminated by '\n' ignore 1 lines (`route`, `track`, `mapmatched`,`timestamp`, `length`);")
+
+    sql = """
+    INSERT INTO path (user_id, geohash, track_id, mapmatched, type, timestamp, length)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """
+
+    # Prepare Data
+    data = list(dx1[['user_id', 'geohash', 'track_id', 'mapmatched', 'type', 'timestamp', 'length']].itertuples(index=False, name=None))
+
+    # Execute Batch Insert
+    mycursor.executemany(sql, data)
     mydb.commit()
-    mycursor.close()
-    mydb.disconnect()
+
+    sql = """
+    INSERT INTO tracks (user_id, track_id, filename, track, mapmatched, type, timestamp, length)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """
+
+    # Prepare Data
+    data = list(dx2[['user_id', 'track_id', 'filename', 'track', 'mapmatched', 'type', 'timestamp', 'length']].itertuples(index=False, name=None))
+
+    # Execute Batch Insert
+    mycursor.executemany(sql, data)
+    mydb.commit()
+
+#     mycursor.execute("SET GLOBAL local_infile=1;")
+#     print("importing tracks ...")
+#     mycursor.execute(f"load data local infile '{directory_path}/{dbName}_path.csv' into table `path` fields terminated by ';' lines terminated by '\n' ignore 1 lines (`geohash`, `track`, `mapmatched`,`timestamp`,`length`);")
+#     print("importing geojsons ...")
+#     mycursor.execute(f"load data local infile '{directory_path}/{dbName}_track.csv' into table `tracks` fields terminated by ';' lines terminated by '\n' ignore 1 lines (`route`, `track`, `mapmatched`,`timestamp`, `length`);")
+#     mydb.commit()
+#     mycursor.close()
+#     mydb.disconnect()
 
     
 if __name__ == '__main__':
@@ -166,7 +223,7 @@ if __name__ == '__main__':
     else:
         title = sys.argv[2] if len(sys.argv)==3 else sys.argv[3]
         directory_path = f"/home/data/import/files/db/{sys.argv[2]}"
-        csvToGeohash(sys.argv[1], sys.argv[2], title, directory_path)
-        importData(sys.argv[2], directory_path)
+        dx1, dx2 = csvToGeohash(sys.argv[1], sys.argv[2], title, directory_path)
+        importData(dx1, dx2, sys.argv[2], directory_path)
         print("Finished")
         subprocess.run(["python3", "/var/www/html/geohash_area.py", sys.argv[2]])

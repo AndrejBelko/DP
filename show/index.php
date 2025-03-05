@@ -16,27 +16,18 @@ try {
 
 $sql = "
 SELECT 
-    SCHEMA_NAME 
-FROM INFORMATION_SCHEMA.SCHEMATA 
-WHERE SCHEMA_NAME NOT IN (
-    SELECT username 
-    FROM hashcode.users
-)
-  and (SCHEMA_NAME NOT LIKE  '%mysql%'
-  and SCHEMA_NAME NOT LIKE  '%information_schema%'  
-  and SCHEMA_NAME NOT LIKE  '%performance_schema%' 
-  and SCHEMA_NAME NOT LIKE  '%sys%' 
-  and SCHEMA_NAME NOT LIKE  '%hashcode%')
+    username
+FROM users 
+WHERE email is NULL;
 ";
 
 $stmt = $db->prepare($sql);
 
-$stmt->execute();
-
 if ($stmt->execute()) {
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $schemaNames = array_column($rows, 'SCHEMA_NAME');
+    $schemaNames = array_column($rows, 'username');
+
 }
 
 unset($stmt);

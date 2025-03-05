@@ -66,8 +66,10 @@ ex: docker container exec -it search_gps /bin/bash
 After that, you need to start Apache2 server and MySQL. You also need to import some settings to MySQL:
 
 ```
-apt install php-zip
 service apache2 start
+apt-get update
+apt install php-zip
+service apache2 restart
 service mysql start
 mysql -u root < /home/data/import/db.sql
 ```
@@ -78,7 +80,7 @@ Csv file should have columns track,lat,lon. Run the following line:
 
 ```
 python3 PATH_TO_csv_to_geohash.py PATH_TO_CSV DBNAME DATASET_NAME
-ex: python3 /home/data/import/csv_to_geohash.py /home/data/import/geolife.csv geolife "Geolife Dataset"
+ex: python3 /home/data/import/csv_to_geohash.py /home/data/import/files/geolife.csv geolife "Geolife Dataset"
 ```
 
 ## Map match:
