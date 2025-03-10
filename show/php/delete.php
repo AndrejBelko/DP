@@ -52,15 +52,10 @@ if (isset($_GET['user_id']) && isset($_GET['track_ids'])) {
             $stmt->bindParam(':track_id', $track_id, PDO::PARAM_INT);
             $stmt->execute();
 
-//        $filePath1 = '/home/data/import/files/db/'. $username1 . '/' . $username1 . '_track.csv';
-//        deleteCSV($filePath1);
-//        createCSV($filePath1,$db, "tracks");
-//
             $filePath2 = '/home/data/import/files/db/' . $username1 . '/' . $username1 . '_path.csv';
             deleteCSV($filePath2);
-            createCSV($filePath2,$db, "path");
-//
-//        // Execute external Python script
+            createCSV($filePath2, $db, $user_id);
+
             if (file_exists($filePath2)){
                 $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username1);
                 exec($command, $output, $return_var);
@@ -74,8 +69,8 @@ if (isset($_GET['user_id']) && isset($_GET['track_ids'])) {
         unset($stmt); // Clean up
         unset($db);   // Close the connection
         // Uncomment for redirection after testing
-//            header("Location: profile.php");
-//            exit;
+        header("Location: profile.php");
+        exit;
     }
 
 } else {
@@ -83,10 +78,12 @@ if (isset($_GET['user_id']) && isset($_GET['track_ids'])) {
 }
 
 
-function createCSV($filePath, $db, $table)
+function createCSV($filePath, $db, $user_id)
 {
-    $sql = "SELECT * FROM ".$table; // Replace 'tracks' with your table name
-    $stmt = $db->query($sql);
+    $sql = "SELECT * FROM path where user_id = :user_id"; // Replace 'tracks' with your table name
+    $stmt = $db->prepare($sql);
+    $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+    $stmt->execute();
 
     // Fetch all rows as an associative array
     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -125,8 +122,6 @@ function deleteCSV($filePath)
         // Delete the file
         if (!unlink($filePath)) {
             die("Error: Unable to delete existing file.");
-        } else {
-            echo "Existing file deleted successfully.<br>";
         }
     }
 }

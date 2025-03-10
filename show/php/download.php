@@ -98,8 +98,8 @@ if (isset($_GET['user_id']) && isset($_GET['track_ids'])) {
     } finally {
         unset($stmt);
         unset($db);
-//            header("Location: profile.php");
-//            exit;
+        header("Location: profile.php");
+        exit;
     }
 
 
