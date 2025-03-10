@@ -52,6 +52,13 @@ if (isset($_GET['user_id']) && isset($_GET['track_ids'])) {
             $stmt->bindParam(':track_id', $track_id, PDO::PARAM_INT);
             $stmt->execute();
 
+            $sql = "DELETE FROM files WHERE track_id = :track_id and user_id = :user_id";
+            $stmt = $db->prepare($sql);
+
+            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+            $stmt->bindParam(':track_id', $track_id, PDO::PARAM_INT);
+            $stmt->execute();
+
             $filePath2 = '/home/data/import/files/db/' . $username1 . '/' . $username1 . '_path.csv';
             deleteCSV($filePath2);
             createCSV($filePath2, $db, $user_id);

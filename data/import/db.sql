@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE `hashcode`.`files` (
     `id` INT UNSIGNED AUTO_INCREMENT,
+    `track_id` INT UNSIGNED NOT NULL,
     `user_id` INT UNSIGNED NOT NULL,
     `name` VARCHAR(512) NOT NULL,
     `path` VARCHAR(512) NOT NULL,

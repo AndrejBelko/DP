@@ -15,35 +15,31 @@ if (!isset($_SESSION["username"]) || $_SESSION["loggedin"] !== true) {
     exit;
 }
 
-if (isset($_GET['user_id']) && isset($_GET['track_ids'])) {
-    echo 1;
+if (isset($_GET['user_id']) && isset($_GET['track_ids']) && isset($_GET['mapmatched'])) {
     try {
-        echo 1;
         $db = new PDO("mysql:host=$hostname;dbname=$dbname", $username, $password);
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        echo 1;
         // Sanitize the 'user_id' parameter
         $user_id = (int) htmlspecialchars($_GET['user_id']); // Cast to int for safety
-        echo 1;
         // Security check: Ensure the session user is the same
         if ($_SESSION['user_id'] != $user_id) {
             header("Location: profile.php");
             exit;
         }
-        echo 1;
         $track_ids = $_GET['track_ids']; // Get the array of track IDs
+        $mapmatched = (int) htmlspecialchars($_GET['mapmatched']); // Cast to int for safety
         $zipFileName = "routes_" . time() . ".zip"; // Unique ZIP file name
         $zipFilePath = "/tmp/$zipFileName"; // Store ZIP in a temporary location
-        echo 1;
         $zip = new ZipArchive();
         if ($zip->open($zipFilePath, ZipArchive::CREATE) !== TRUE) {
             die("Error: Unable to create ZIP file.");
         }
         foreach ($track_ids as $track_id) {
             $track_id = (int) $track_id; // Ensure it's an integer
+            echo $track_id;
 
             // Fetch the geometry data from the database
-            $sql = "SELECT * FROM tracks WHERE track_id = :track_id AND user_id = :user_id";
+            $sql = "SELECT * FROM files WHERE track_id = :track_id AND user_id = :user_id";
             $stmt = $db->prepare($sql);
             $stmt->bindParam(':track_id', $track_id, PDO::PARAM_INT);
             $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
@@ -53,26 +49,12 @@ if (isset($_GET['user_id']) && isset($_GET['track_ids'])) {
             if (!$row) {
                 continue; // Skip this track if not found
             }
-
-            // Decode the GeoJSON data
-            $geojson = json_decode($row['track'], true);
-            if (!isset($geojson['geometry']['coordinates'])) {
-                continue; // Skip invalid tracks
+            if ($mapmatched === 1){
+                $file_path = str_replace("uploads", "mapmatched", $row['path']);
+            } else{
+                $file_path = $row['path'];
             }
-
-            $coordinates = $geojson['geometry']['coordinates'];
-
-            // Create a CSV file in memory
-            $csvContent = "Longitude,Latitude\n"; // Header row
-            foreach ($coordinates as $coordinate) {
-                if (is_array($coordinate) && count($coordinate) === 2) {
-                    $csvContent .= implode(",", $coordinate) . "\n";
-                }
-            }
-
-            // Add CSV file to ZIP
-            $csvFileName = "route_$track_id.csv"; // Name each CSV uniquely
-            $zip->addFromString($csvFileName, $csvContent);
+            $zip->addFile($file_path, basename($row['path']));
         }
 
         // Close ZIP file
@@ -98,8 +80,8 @@ if (isset($_GET['user_id']) && isset($_GET['track_ids'])) {
     } finally {
         unset($stmt);
         unset($db);
-        header("Location: profile.php");
-        exit;
+//        header("Location: profile.php");
+//        exit;
     }
 
 

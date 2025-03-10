@@ -29,6 +29,7 @@ RUN pip3 install gpxpy
 RUN apt -y install npm
 RUN pip3 install shapely
 RUN pip3 install IPython
+RUN pip3 install scipy
 RUN npm install
 
 # create db, mapmatched, uploads dirs in data/import/files

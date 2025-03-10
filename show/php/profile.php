@@ -89,9 +89,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $row_track = $stmt->fetch();
                     $track_id = strval($row_track["track_id"] + 1);
 
-                    $sql = "INSERT INTO files (user_id, name, path) VALUES (:pouzivatel_id, :nazov, :cesta)";
+                    $sql = "INSERT INTO files (user_id, track_id, name, path) VALUES (:pouzivatel_id, :track_id, :nazov, :cesta)";
                     $stmt = $db->prepare($sql);
                     $stmt->bindParam(":pouzivatel_id", $pouzivatel_id, PDO::PARAM_INT);
+                    $stmt->bindParam(":track_id", $track_id, PDO::PARAM_INT);
                     $stmt->bindParam(":nazov", $csv_name, PDO::PARAM_STR);  // Save the CSV file name
                     $stmt->bindParam(":cesta", $csv_file, PDO::PARAM_STR);  // Store the CSV file path
 
@@ -101,9 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $type = isset($_POST['trajectoryType']) ? 'Drive' : 'Walk';
 
                     $command = escapeshellcmd("python3 /var/www/html/track_to_database.py $filename $csv_file $username $pouzivatel_id 0 $type $track_id" . " dataset");
-
                     $output = shell_exec($command . " 2>&1");
-                    var_dump($output);
+
                     $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
                     exec($command, $output, $return_var);
 
@@ -143,6 +143,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     // Execute the Python script
                     exec($pythonScript, $output, $return_var);
 
+                    $command = escapeshellcmd("python3 /var/www/html/interpolate.py $csv_file");
+                    $output = shell_exec($command . " 2>&1");
+                    echo $output;
 
                 } else {
                     $infomsg = "Error: CSV file not generated.";
@@ -173,9 +176,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $action = $_POST['action'];
 
         if (!empty($track_ids)) {
-            if ($action === "download") {
+            if ($action === "download_orig") {
                 $queryString = http_build_query(['track_ids' => $track_ids]);
-                header("Location: download.php?$queryString&user_id=$_SESSION[user_id]");
+                header("Location: download.php?mapmatched=0&$queryString&user_id=$_SESSION[user_id]");
+            } elseif ($action === "download_mm") {
+                $queryString = http_build_query(['track_ids' => $track_ids]);
+                header("Location: download.php?mapmatched=1&$queryString&user_id=$_SESSION[user_id]");
             } elseif ($action === "delete") {
                 // Convert array to query string
                 $queryString = http_build_query(['track_ids' => $track_ids]);
@@ -448,7 +454,8 @@ unset($db);
                         </table>
 
                         <!-- Buttons for actions -->
-                        <button type="submit" name="action" value="download" class="btn btn-success mt-2">Download Selected</button>
+                        <button type="submit" name="action" value="download_orig" class="btn btn-success mt-2">Download Selected Original</button>
+                        <button type="submit" name="action" value="download_mm" class="btn btn-success mt-2">Download Selected Mapmatched</button>
                         <button type="submit" name="action" value="delete" class="btn btn-danger mt-2">Delete Selected</button>
                     </div>
                 </div>
