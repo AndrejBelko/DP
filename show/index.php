@@ -1048,12 +1048,13 @@ unset($db);
     function showAllPaths() {
         console.log(mapmatched)
         if (queryDB !== " ") {
+            console.log(queryDB)
             $.ajax({
                 method: "POST",
                 url: "php/show_all_tracks.php",
                 dataType: "json",
                 data: {
-                    "dbName": "hashcode",
+                    "dbName": queryDB,
                     "type": mapmatched
                 }
             })

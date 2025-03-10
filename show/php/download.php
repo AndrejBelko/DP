@@ -15,8 +15,6 @@ if (!isset($_SESSION["username"]) || $_SESSION["loggedin"] !== true) {
     exit;
 }
 
-echo 1;
-
 if (isset($_GET['user_id']) && isset($_GET['track_ids'])) {
     echo 1;
     try {

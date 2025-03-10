@@ -3,18 +3,18 @@ import mysql.connector
 import json
 import sys
 
-def runQuery(dbName, type):
+def runQuery(type, user_id):
     mydb = mysql.connector.connect(
         host="localhost",
         user="search",
         password="password",
-        database=dbName
+        database="hashcode"
     )
 
     mycursor = mydb.cursor()
 
     mycursor.execute(
-        f"select id, track, mapmatched, type, timestamp, length from tracks where mapmatched = {type};"
+        f"select id, track, mapmatched, type, timestamp, length from tracks where mapmatched = {type} and user_id = {user_id};"
     )
     routes = pd.DataFrame(mycursor.fetchall(), columns=['id', 'route','mapmatched', 'type', 'timestamp','length'])
     mycursor.close()
