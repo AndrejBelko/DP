@@ -833,7 +833,7 @@ unset($db);
         match_count = 0;
 
         for (var i in gdata) {
-            var dateObj = new Date(gdata[i][4]);
+            var dateObj = new Date(gdata[i][7]);
             var formattedDate = dateObj.getFullYear() + '-' +
                 String(dateObj.getMonth() + 1).padStart(2, '0') + '-' +
                 String(dateObj.getDate()).padStart(2, '0') + ' ' +

@@ -3,7 +3,7 @@ import mysql.connector
 import json
 import sys
 
-def runQuery(patterns, start_pos, end_pos, max_gap, min_match, dbName, type):
+def runQuery(patterns, start_pos, end_pos, max_gap, min_match, dbName, type, user_id):
     mydb = mysql.connector.connect(
         host="localhost",
         user="search",
@@ -40,7 +40,7 @@ def runQuery(patterns, start_pos, end_pos, max_gap, min_match, dbName, type):
         return pd.DataFrame([], columns=['id', 'matches', 'start_pos', 'end_pos', 'max_gap','track_id', 'path'])
 
     mycursor.execute(
-        f"select track_id as id, track, timestamp, mapmatched from tracks where mapmatched = {type} and track_id in ({str(r['id'].values.tolist())[1:-1]});"
+        f"select track_id as id, track, timestamp, mapmatched from tracks where user_id = {user_id} and mapmatched = {type} and track_id in ({str(r['id'].values.tolist())[1:-1]});"
     )
     routes = pd.DataFrame(mycursor.fetchall(), columns=['id', 'track_id', 'timestamp', 'mapmatched'])
     mycursor.close()
@@ -62,6 +62,6 @@ def runQuery(patterns, start_pos, end_pos, max_gap, min_match, dbName, type):
 if __name__ == '__main__':
 
     # print(sys.argv[1][1:-1].split(","), sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
-    r = runQuery(sys.argv[1][1:-1].split(","), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]), sys.argv[6], int(sys.argv[7]))
+    r = runQuery(sys.argv[1][1:-1].split(","), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]), sys.argv[6], int(sys.argv[7]), int(sys.argv[8]))
 
     print(json.dumps(r.values.tolist()))
