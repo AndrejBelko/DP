@@ -213,10 +213,10 @@ unset($db);
                 <!-- Left side navigation links -->
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link active fs-5" aria-current="page" href="index.php">Mapa</a>
+                        <a class="nav-link active fs-5" aria-current="page" href="index.php">Map</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link fs-5" href="php/profile.php">Profil</a>
+                        <a class="nav-link fs-5" href="php/profile.php">Profile</a>
                     </li>
                     <!--                    <li class="nav-item">-->
                     <!--                        <a class="nav-link fs-5" href="upload.php">Nahranie nových trajektórií</a>-->
@@ -226,14 +226,14 @@ unset($db);
                     <!--                    </li>-->
                     <?php if (isset($_SESSION['username']) && $_SESSION['loggedin'] === true): ?>
                         <li class="nav-item">
-                            <a class="nav-link fs-5" href="php/logout.php">Odhlásiť sa</a>
+                            <a class="nav-link fs-5" href="php/logout.php">Log out</a>
                         </li>
                     <?php else: ?>
                         <li class="nav-item">
-                            <a class="nav-link fs-5" href="php/register.php">Registrovať sa</a>
+                            <a class="nav-link fs-5" href="php/register.php">Register</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link fs-5" href="php/login.php">Prihlásiť sa</a>
+                            <a class="nav-link fs-5" href="php/login.php">Login</a>
                         </li>
                     <?php endif; ?>
                 </ul>

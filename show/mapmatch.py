@@ -63,8 +63,7 @@ def map_match(points,container_name,parameters,costing):
     meili_coordinates = strr
     meili_head = '{"shape":['
     meili_tail = '], "shape_match":"map_snap", "costing": "' + costing + '", "costing_options":{"pedestrian":{"ignore_access":true} }, "format":"osrm", "trace_options":{"search_radius": ' + \
-                 parameters['search_radius'] + ', "turn_penalty_factor": ' + parameters[
-                     'turn_penalty_factor'] + ', "gps_accuracy": ' + parameters['gps_accuracy'] + '}}'
+                 parameters['search_radius'] + ', "turn_penalty_factor": ' + parameters['turn_penalty_factor'] + ', "gps_accuracy": ' + parameters['gps_accuracy'] + '}}'
     meili_request_body = meili_head + meili_coordinates + meili_tail
     port = 8002
     url = f"http://{container_name}:{port}/trace_route"

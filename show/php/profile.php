@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         'type' => $type,
                         'gps_accuracy' => "5", // Ensure $gpsAccuracy is defined
                         'search_radius' => "50", // Ensure $searchRadius is defined
-                        'turn_penalty_factor' => "200" // Ensure $turnPenalty is defined
+                        'turn_penalty_factor' => "300" // Ensure $turnPenalty is defined
                     ];
 
                     // Convert the parameters array to JSON
@@ -307,11 +307,11 @@ unset($db);
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link fs-5" aria-current="page" href="../index.php">Mapa</a>
+                        <a class="nav-link fs-5" aria-current="page" href="../index.php">Map</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link active fs-5" href="profile.php">
-                            Profil
+                            Profile
                         </a>
                     </li>
                     <!--                    <li class="nav-item">-->
@@ -321,17 +321,17 @@ unset($db);
                     <!--                    </li>-->
                     <li class="nav-item">
                         <a class="nav-link fs-5" href="logout.php">
-                            Odhlásiť sa
+                            Log out
                         </a>
                     </li>
                     <li class="nav-item">
                         <div class="nav-link fs-5">
-                            Vitaj, <?php echo $_SESSION['username'] ?>
+                            Welcome, <?php echo $_SESSION['username'] ?>
                         </div>
                     </li>
                     <li class="nav-item">
                         <div class="nav-link fs-5" id="token" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                            Bezpečnostný token
+                            Security token
                         </div>
                     </li>
                 </ul>
@@ -343,14 +343,14 @@ unset($db);
     <div class="row text-center justify-content-center">
         <div class="col-md-6">
             <button class="mt-4 mb-3 btn btn-primary btn-sm btn-collapse" onclick="showElement('upload-hodinky')">
-                <strong>Nahraj udaje z hodiniek
+                <strong>Upload from smartwatch
                     (.csv)</strong>
             </button>
             <div style="display: none" id="upload-hodinky" class="text-center justify-content-center">
                 <form action="profile.php" method="post" enctype="multipart/form-data">
                     <input style="width: 250px;" type="file" name="files[]" multiple class="form-control">
                     <div class="form-group mb-3 d-flex align-items-center">
-                        <label for="trajectoryType" class="form-label me-3">Typ Trajektórie</label>
+                        <label for="trajectoryType" class="form-label me-3">Trajectory type</label>
                         <div class="form-check form-switch">
                             <input
                                     class="form-check-input"
@@ -361,13 +361,12 @@ unset($db);
                             <label class="form-check-label" for="trajectoryType">Car Ride</label>
                         </div>
                     </div>
-                    <button type="submit" name="submit" class="btn btn-primary">Nahraj</button>
+                    <button type="submit" name="submit" class="btn btn-primary">Upload</button>
                 </form>
             </div>
         </div>
         <div class="col-md-6 text-center justify-content-center">
-            <button class="mt-4 mb-3 btn btn-primary btn-sm" onclick="showElement('upload-trex')"><strong>Nahraj udaje z
-                    T-REXu
+            <button class="mt-4 mb-3 btn btn-primary btn-sm" onclick="showElement('upload-trex')"><strong>Upload from TRex
                     (.gpx)</strong>
             </button>
             <div style="display: none" id="upload-trex" class="text-center justify-content-center">
@@ -377,7 +376,7 @@ unset($db);
                         <input style="width: 250px;" type="file" name="trexfiles[]" multiple class="form-control">
                     </div>
                     <div class="form-group mb-3 d-flex align-items-center">
-                        <label for="trajectoryType" class="form-label me-3">Typ Trajektórie</label>
+                        <label for="trajectoryType" class="form-label me-3">Trajectory type</label>
                         <div class="form-check form-switch">
                             <input
                                     class="form-check-input"
@@ -388,7 +387,7 @@ unset($db);
                             <label class="form-check-label" for="trajectoryType">Car Ride</label>
                         </div>
                     </div>
-                    <button type="submit" name="trexsubmit" class="btn btn-primary">Nahraj</button>
+                    <button type="submit" name="trexsubmit" class="btn btn-primary">Upload</button>
                 </form>
             </div>
         </div>
@@ -398,7 +397,15 @@ unset($db);
             <div class="row">
                 <div class="col-12 col-md-10 mx-auto">
                     <div class="table-wrapper">
-                        <table class="table table-striped table-bordered">
+                        <!-- Buttons for actions aligned on one line with margin between -->
+                        <div class="d-flex justify-content-start mt-2">
+                            <!-- "Check All" Button -->
+                            <button type="button" id="checkAllBtn" class="btn btn-primary btn-sm m-3" onclick="checkAllCheckboxes()">Check All</button>
+                            <button type="submit" name="action" value="download_orig" class="btn btn-success m-3">Download Selected Original</button>
+                            <button type="submit" name="action" value="download_mm" class="btn btn-success m-3">Download Selected Mapmatched</button>
+                            <button type="submit" name="action" value="delete" class="btn btn-danger m-3">Delete Selected</button>
+                        </div>
+                        <table class="table table-striped table-bordered mt-5">
                             <thead class="table-dark">
                             <tr>
                                 <th>Select</th>
@@ -417,7 +424,7 @@ unset($db);
                                 for ($i = 0; $i < count($row); $i += 2) {
                                     $row_tmp = $row[$i]; // Access every second element
                                     echo "<tr>";
-                                    echo "<td><input type='checkbox' name='track_ids[]' value='" . $row_tmp['track_id'] . "'></td>";
+                                    echo "<td><input class= 'checkbox' type='checkbox' name='track_ids[]' value='" . $row_tmp['track_id'] . "'></td>";
                                     echo "<td>" . $row_tmp['track_id'] . "</td>";
                                     echo "<td>" . $row_tmp['filename'] . "</td>";
                                     echo "<td>" . $row_tmp['timestamp'] . "</td>";
@@ -452,11 +459,6 @@ unset($db);
                             ?>
                             </tbody>
                         </table>
-
-                        <!-- Buttons for actions -->
-                        <button type="submit" name="action" value="download_orig" class="btn btn-success mt-2">Download Selected Original</button>
-                        <button type="submit" name="action" value="download_mm" class="btn btn-success mt-2">Download Selected Mapmatched</button>
-                        <button type="submit" name="action" value="delete" class="btn btn-danger mt-2">Delete Selected</button>
                     </div>
                 </div>
             </div>
@@ -499,13 +501,13 @@ unset($db);
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Security token</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <!-- Modal -->
             <div class="modal-body">
                 <form action="profile.php" method="post" id="formSecToken">
-                    <label for="secToken">Vložte svoj bezpečnostný token:</label>
+                    <label for="secToken">Provide your security token:</label>
                     <input type="text" id="secToken" name="secToken" class="form-control" placeholder="123XYZ">
                 </form>
             </div>
@@ -540,6 +542,26 @@ unset($db);
 </body>
 </html>
 <script>
+
+    // Function to check or uncheck all checkboxes
+    function checkAllCheckboxes() {
+        var checkboxes = document.querySelectorAll('.checkbox');
+        var checkAllBtn = document.getElementById('checkAllBtn');
+
+        // Check if all checkboxes are selected
+        var allChecked = Array.from(checkboxes).every(function(checkbox) {
+            return checkbox.checked;
+        });
+
+        // Toggle checkboxes
+        checkboxes.forEach(function(checkbox) {
+            checkbox.checked = !allChecked;
+        });
+
+        // Change button text depending on the action
+        checkAllBtn.textContent = allChecked ? 'Check All' : 'Uncheck All';
+    }
+
     document.getElementById("token").addEventListener('click', function () {
         const errorToast = new bootstrap.Toast(document.getElementById('tokenToast'));
         errorToast.show();

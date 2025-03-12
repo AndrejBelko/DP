@@ -80,7 +80,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="row justify-content-center">
                             <div class="col-md-10 col-lg-6 col-xl-5 order-2 order-lg-1">
 
-                                <p class="text-center h1 fw-bold mb-5 mx-1 mx-md-4 mt-4">Prihlásenie</p>
+                                <p class="text-center h1 fw-bold mb-5 mx-1 mx-md-4 mt-4">Login</p>
 
                                 <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>"
                                       class="mx-1 mx-md-4">
@@ -91,7 +91,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <input type="text" name="username"
                                                    id="username"
                                                    class="form-control" required>
-                                            <label class="form-label" for="username">Používateľské meno</label>
+                                            <label class="form-label" for="username">Username</label>
                                         </div>
                                     </div>
 
@@ -101,7 +101,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <input type="password" name="password"
                                                    id="password" class="form-control"
                                                    required class="form-control"/>
-                                            <label class="form-label" for="password">Heslo</label>
+                                            <label class="form-label" for="password">Password</label>
                                         </div>
                                     </div>
 
@@ -109,13 +109,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <button type="submit"
                                                 style="background-color: darkslategray; border-color: darkslategray;"
                                                 data-mdb-button-init data-mdb-ripple-init
-                                                class="btn btn-primary btn-lg">Prihlásenie
+                                                class="btn btn-primary btn-lg">Login
                                         </button>
                                     </div>
 
                                     <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
                                         <a href="register.php">
-                                            Registrácia
+                                            Register
                                         </a>
                                     </div>
 
