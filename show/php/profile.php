@@ -390,14 +390,14 @@ unset($db);
                                     }
                                     echo "<td>
                                     <a href='delete.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
-                                    <a href='download.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
+                                    <a href='download.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."&mapmatched=0' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
                                   </td>";
 
                                     if (isset($row[$i + 1])) {
                                         $next_row = $row[$i + 1];
                                         echo "<td>
                                         <a href='delete.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
-                                        <a href='download.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
+                                        <a href='download.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."&mapmatched=1' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
                                       </td>";
                                     } else {
                                         echo "<td>—</td>"; // Placeholder if there is no `$i + 1`
