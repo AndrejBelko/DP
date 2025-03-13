@@ -353,7 +353,7 @@ unset($db);
                     <div class="table-wrapper">
                         <div class="d-flex justify-content-start mt-2">
                             <!-- "Check All" Button -->
-                            <button type="button" id="checkAllBtn" class="btn btn-primary btn-sm m-3" onclick="checkAllCheckboxes()">Check All</button>
+                            <button type="button" id="checkAllBtn" class="btn btn-primary btn-sm m-3" onclick="checkAllCheckboxes()">Select All</button>
                             <button type="submit" name="action" value="download_orig" class="btn btn-success m-3">Download Selected Original</button>
                             <button type="submit" name="action" value="download_mm" class="btn btn-success m-3">Download Selected Mapmatched</button>
                             <button type="submit" name="action" value="delete" class="btn btn-danger m-3">Delete Selected</button>
