@@ -16,6 +16,31 @@ try {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
+
+        $headers = getallheaders();
+
+        $apikey = isset($headers["x-apikey"]) ? $headers["x-apikey"] : "";
+        if ($apikey==""){
+            throw new Exception("Api key required",400);
+        }
+
+        if ($apikey!="mvx0dtrEknr53uEozm1Czf8oCvnxyIPpkB1Up2p6PK"){
+            throw new Exception("Api invalid",401);
+        }
+
+        $folder = isset($headers["x-folder"]) ? $headers["x-folder"] : "";
+        if ($folder==""){
+            throw new Exception("Folder required",400);
+        }
+
+        $username = "";
+        $filename = basename($_FILES["file"]["name"]);
+        $type = $headers["x-type"];
+
+        if (preg_match('/id-(.*?)\//', $headers["x-folder"], $matches)) {
+            $username = $matches[1]; // This will contain '16112023pro'
+        }
+
         $sql = "SELECT * FROM users WHERE username = :username";
         $stmt = $db->prepare($sql);
         $stmt->bindParam(":username", $username, PDO::PARAM_STR);
@@ -29,33 +54,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $pouzivatel_id = $row["id"];
         $token = $row['token'];
 
-        $headers = getallheaders();
-
-        $apikey = isset($headers["x-apikey"]) ? $headers["x-apikey"] : "";
-        if ($apikey==""){
-            throw new Exception("Api key required",400);
-        }
-
-        if ($apikey!="mvx0dtrEknr53uEozm1Czf8oCvnxyIPpkB1Up2p6PK"){
-            throw new Exception("Api invalid",401);
-        }
-
-//        $secret_token = isset($headers["x-token"]) ? $headers["x-token"] : "";
-//        if ($secret_token!=$token){
-//            throw new Exception("Secret token does not match.",401);
-//        }
-
-        $folder = isset($headers["x-folder"]) ? $headers["x-folder"] : "";
-        if ($folder==""){
-            throw new Exception("Folder required",400);
-        }
-
-        $username = "";
-        $filename = basename($_FILES["file"]["name"]);
-        $type = $headers["x-type"];
-
-        if (preg_match('/id-(.*?)\//', $headers["x-folder"], $matches)) {
-            $username = $matches[1]; // This will contain '16112023pro'
+        $secret_token = isset($headers["x-token"]) ? $headers["x-token"] : "";
+        if ($secret_token!=$token){
+            throw new Exception("Secret token does not match.",401);
         }
 
         // $target_dir = "/home/data/import/uploads/".$folder."/";
