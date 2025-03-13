@@ -1,4 +1,6 @@
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root';
+DROP USER IF EXISTS 'search'@'%';
+
 CREATE USER 'search'@'%' IDENTIFIED BY 'password';
 GRANT ALL PRIVILEGES ON *.* TO 'search'@'%';
 
