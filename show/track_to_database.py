@@ -52,6 +52,7 @@ df['user_id'] = user_id
 df.to_csv(csvPath,index=False, mode="w")
 df = df.fillna('')
 columns_with_time = [col for col in df.columns if 'date' in col.lower()]
+
 if len(columns_with_time) != 0:
     timestamp = df[columns_with_time[0]].iloc[0]
     if isinstance(timestamp, (int, np.int64)) and len(str(timestamp)) > 10:
@@ -68,8 +69,11 @@ else:
             # Convert milliseconds to seconds
             timestamp_in_s = timestamp / 1000
 
-            # Convert to datetime object
-            timestamp = datetime.fromtimestamp(timestamp_in_s)
+            # Convert to a datetime object
+            dt_object = datetime.utcfromtimestamp(timestamp_in_s)  # Use utcfromtimestamp() for UTC time
+
+            # Format for MySQL
+            timestamp = dt_object.strftime('%Y-%m-%d %H:%M:%S')
 
 
 df['track_id'] = track_id
