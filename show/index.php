@@ -5,6 +5,9 @@ error_reporting(E_ALL);
 error_reporting(E_WARNING);
 require_once('php/config.php');
 session_start();
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
 
 try {
     $db = new PDO("mysql:host=$hostname;dbname=$dbname", $username, $password);

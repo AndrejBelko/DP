@@ -48,6 +48,8 @@ except FileNotFoundError:
     dx1.to_csv(f"{directory_path}/{dbName}_path.csv", index=False, mode="w", sep=';', quoting=csv.QUOTE_NONE)
 
 df = pd.read_csv(csvPath)
+df['user_id'] = user_id
+df.to_csv(csvPath,index=False, mode="w")
 df = df.fillna('')
 columns_with_time = [col for col in df.columns if 'date' in col.lower()]
 if len(columns_with_time) != 0:
