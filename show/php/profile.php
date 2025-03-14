@@ -215,43 +215,32 @@ unset($db);
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Profile</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-          integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
-          crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
-            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
-            crossorigin=""></script>
 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js" integrity="sha512-STof4xm1wgkfm7heWqFJVn58Hm3EtS31XFaagaa8VMReCXAkQnJZ+jEy8PCC/iT18dFy95WcExNHFTqLyp72eQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-1.13.7/b-2.4.2/b-colvis-2.4.2/b-html5-2.4.2/b-print-2.4.2/date-1.5.1/r-2.5.0/sc-2.3.0/sb-1.6.0/sp-2.2.0/sl-1.7.0/datatables.min.css" rel="stylesheet">
+
+    <script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-1.13.7/b-2.4.2/b-colvis-2.4.2/b-html5-2.4.2/b-print-2.4.2/date-1.5.1/r-2.5.0/sc-2.3.0/sb-1.6.0/sp-2.2.0/sl-1.7.0/datatables.min.js"></script>
 
     <link href="https://netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
-    <script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
-    <script src="https://npmcdn.com/leaflet-geometryutil"></script>
-    <script src="../js/geohash.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="../js/core.js"></script>
     <script src="../js/charts.js"></script>
     <script src="../js/animated.js"></script>
+    <script src="../js/geohash.js"></script>
 
     <style>
 
-        #map {
-            min-height: 400px;
-            height: 60%;
-            max-width: 100%;
-        }
 
         .chartdiv {
             width: 100%;
             height: 400px;
         }
 
-        #datacol {
-            height: 90vh; /* 100% of the viewport height */
-            overflow-y: auto; /* Enables vertical scrolling */
-        }
 
         @media (max-width: 768px) {
             .table-wrapper {
@@ -310,11 +299,6 @@ unset($db);
                             Profile
                         </a>
                     </li>
-                    <!--                    <li class="nav-item">-->
-                    <!--                        <a class="nav-link fs-5" href="pdf.php">-->
-                    <!--                            Príručka-->
-                    <!--                        </a>-->
-                    <!--                    </li>-->
                     <li class="nav-item">
                         <a class="nav-link fs-5" href="logout.php">
                             Log out
@@ -335,6 +319,7 @@ unset($db);
         </div>
     </nav>
 </header>
+
 <div class="container">
     <!-- Buttons for actions aligned on one line with margin between -->
     <div class="d-flex justify-content-center mt-2">
@@ -358,7 +343,7 @@ unset($db);
                             <button type="submit" name="action" value="download_mm" class="btn btn-success m-3">Download Selected Mapmatched</button>
                             <button type="submit" name="action" value="delete" class="btn btn-danger m-3">Delete Selected</button>
                         </div>
-                        <table class="table table-striped table-bordered mt-5">
+                        <table id="myTable" class="table table-striped table-bordered mt-5">
                             <thead class="table-dark">
                             <tr>
                                 <th>Select</th>
@@ -561,10 +546,20 @@ unset($db);
 
 <!-- Include Bootstrap JS (optional, for advanced interactions) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
 <script>
+    let table = new DataTable('#myTable', {
+        paging: true,
+        columnDefs: [
+            { orderable: false, targets: [0, 4, 5, 6, 7] } // Disable sorting on columns 1, 5, 6, 7, 8
+        ],
+        order: [[1, 'asc']], // Keep ordering on column 2 (index 1)
+    });
 
+
+    console.log(typeof $.fn.DataTable);
     // Function to check or uncheck all checkboxes
     function checkAllCheckboxes() {
         var checkboxes = document.querySelectorAll('.checkbox');
@@ -588,69 +583,6 @@ unset($db);
         const errorToast = new bootstrap.Toast(document.getElementById('tokenToast'));
         errorToast.show();
     });
-
-    function drawTrackScaledWithoutZoom(coordinates, svgWidth, svgHeight, i) {
-        // Find the minimum and maximum values for x and y coordinates.
-        let minX = coordinates[0][0], maxX = coordinates[0][0];
-        let minY = coordinates[0][1], maxY = coordinates[0][1];
-        coordinates.forEach(coord => {
-            if (coord[0] < minX) minX = coord[0];
-            if (coord[0] > maxX) maxX = coord[0];
-            if (coord[1] < minY) minY = coord[1];
-            if (coord[1] > maxY) maxY = coord[1];
-        });
-
-        // Calculate the width and height of the viewable area.
-        const width = maxX - minX;
-        const height = maxY - minY;
-
-        // Calculate the scaling factor for the polyline.
-        const xScale = svgWidth / width;
-        const yScale = svgHeight / height;
-        const scale = Math.min(xScale, yScale);
-
-        // Calculate the points for the SVG polyline by scaling the polyline coordinates.
-        const scaledPoints = coordinates.map(coord => {
-            const x = (coord[0] - minX) * scale;
-            const y = (coord[1] - minY) * scale;
-            return `${x},${y}`;
-        }).join(' ');
-
-        // Create an SVG element and set its dimensions.
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', svgWidth);
-        svg.setAttribute('height', svgHeight);
-
-        // Create a polyline element and set its attributes.
-        const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-        polyline.setAttribute('points', scaledPoints);
-        polyline.setAttribute('stroke', '#1959d1');
-        polyline.setAttribute('stroke-width', '2');
-        polyline.setAttribute('fill', 'none');
-
-        // Append the polyline element to the SVG element and the SVG element to the DOM.
-        divname = "mapArea" + i;
-        svg.appendChild(polyline);
-        document.getElementById(divname).replaceChildren(svg);
-    }
-
-    function showResults1() {
-        var x = "";
-        for (var i in gdata) {
-            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;' onclick=\"showTrack1(" + i + ")\"></div></td><td><div onclick=\"showTrack(" + i + ")\"><h5><b>" + gdata[i][0] + "</b></div></td></tr>";
-
-        }
-        for (i in gdata) {
-            drawTrackScaledWithoutZoom(JSON.parse(gdata[i][1]).geometry.coordinates, 80, 80, i);
-        }
-        // chart.options.data[0].dataPoints = dps;
-        // chart2.options.data[0].dataPoints = dps2;
-        chart.render();
-        chart2.render();
-        dps = [];
-        dps2 = [];
-        isFirstToDisplay = 0;
-    }
 </script>
 
 <!-- Bootstrap JS and dependencies -->

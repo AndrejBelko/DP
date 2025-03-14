@@ -62,6 +62,8 @@ if (($handle = fopen($filePath, "r")) !== FALSE) {
                 $time = $timestampInSeconds; // Use directly or convert to readable date
             } elseif (strlen($data[$mappedColumns["time"]]) === 6) {
                 $time = strtotime($data[$mappedColumns["time"]]);
+            } elseif (strlen($data[$mappedColumns["time"]]) === 5){
+                $time = strtotime('0'. $data[$mappedColumns["time"]]);
             }
             $speed = $data[$mappedColumns["speed"]];
             $height = $data[$mappedColumns["height"]];
