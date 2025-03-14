@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // $target_dir = "/home/data/import/uploads/".$folder."/";
         $target_dir = "/home/data/import/files/uploads/" . $username . "/";
-        $target_file = $target_dir . basename($_FILES["file"]["name"]);
+        $target_file = $target_dir . $filename;
 
         if (!file_exists($target_dir)) {
             if (!mkdir($target_dir, 0777, true)) {
@@ -79,6 +79,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute();
         $row_track = $stmt->fetch();
         $track_id = strval($row_track["track_id"] + 1);
+
+        $sql = "INSERT INTO files (user_id, track_id, name, path) VALUES (:pouzivatel_id, :track_id, :nazov, :cesta)";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(":pouzivatel_id", $pouzivatel_id, PDO::PARAM_INT);
+        $stmt->bindParam(":track_id", $track_id, PDO::PARAM_INT);
+        $stmt->bindParam(":nazov", $filename, PDO::PARAM_STR);  // Save the CSV file name
+        $stmt->bindParam(":cesta", $target_file, PDO::PARAM_STR);  // Store the CSV file path
+
+        $stmt->execute();
 
         $command = "python3 /var/www/html/track_to_database.py $filename $target_file $username $pouzivatel_id 0 $type $track_id" . " dataset 2>&1";
         exec($command, $output, $return_var);
