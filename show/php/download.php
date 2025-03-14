@@ -80,8 +80,8 @@ if (isset($_GET['user_id']) && isset($_GET['track_ids']) && isset($_GET['mapmatc
     } finally {
         unset($stmt);
         unset($db);
-//        header("Location: profile.php");
-//        exit;
+        header("Location: profile.php");
+        exit;
     }
 
 
