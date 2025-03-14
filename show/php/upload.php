@@ -80,6 +80,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $target_dir = "/home/data/import/files/uploads/" . $username . "/";
         $target_file = $target_dir . $filename;
 
+        if (strpos($filename, 'location')){
+            $file_source = 'Mobile';
+        } else {
+            $file_source = 'Smartwatch';
+        }
+
         if (!file_exists($target_dir)) {
             if (!mkdir($target_dir, 0777, true)) {
                 throw new Exception("Failed to create directory.", 500);
@@ -97,12 +103,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $row_track = $stmt->fetch();
         $track_id = strval($row_track["track_id"] + 1);
 
-        $sql = "INSERT INTO files (user_id, track_id, name, path) VALUES (:pouzivatel_id, :track_id, :nazov, :cesta)";
+        $sql = "INSERT INTO files (user_id, track_id, name, path, file_source) VALUES (:pouzivatel_id, :track_id, :nazov, :cesta, :zdroj)";
         $stmt = $db->prepare($sql);
         $stmt->bindParam(":pouzivatel_id", $pouzivatel_id, PDO::PARAM_INT);
         $stmt->bindParam(":track_id", $track_id, PDO::PARAM_INT);
         $stmt->bindParam(":nazov", $filename, PDO::PARAM_STR);  // Save the CSV file name
         $stmt->bindParam(":cesta", $target_file, PDO::PARAM_STR);  // Store the CSV file path
+        $stmt->bindParam(":zdroj", $file_source, PDO::PARAM_STR);  // Store the CSV file path
 
         $stmt->execute();
 

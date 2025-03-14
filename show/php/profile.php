@@ -64,10 +64,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     // Call the Python script to convert GPX to CSV
                     $command = escapeshellcmd("python3 /var/www/html/gpx_to_csv.py $gpx_file $csv_file");
                     shell_exec($command);
+                    $file_source = 'TRex';
                 } else {
                     // Create CSV file name by replacing .gpx with .csv
                     $csv_name = pathinfo($filename, PATHINFO_FILENAME) . '.csv';
                     $csv_file = $uploads_dir . $csv_name;  // Set the CSV output path with same name
+                    $file_source = 'Smartwatch';
                 }
 
 
@@ -89,12 +91,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $row_track = $stmt->fetch();
                     $track_id = strval($row_track["track_id"] + 1);
 
-                    $sql = "INSERT INTO files (user_id, track_id, name, path) VALUES (:pouzivatel_id, :track_id, :nazov, :cesta)";
+                    $sql = "INSERT INTO files (user_id, track_id, name, path, file_source) VALUES (:pouzivatel_id, :track_id, :nazov, :cesta, :zdroj)";
                     $stmt = $db->prepare($sql);
                     $stmt->bindParam(":pouzivatel_id", $pouzivatel_id, PDO::PARAM_INT);
                     $stmt->bindParam(":track_id", $track_id, PDO::PARAM_INT);
                     $stmt->bindParam(":nazov", $csv_name, PDO::PARAM_STR);  // Save the CSV file name
                     $stmt->bindParam(":cesta", $csv_file, PDO::PARAM_STR);  // Store the CSV file path
+                    $stmt->bindParam(":zdroj", $file_source, PDO::PARAM_STR);  // Store the CSV file path
 
                     $stmt->execute();
 
@@ -196,12 +199,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 if (!$err) {
-    $user_id = intval($_SESSION['user_id']);
-    $sql = "SELECT * FROM tracks where user_id = :user_id";
+    $user_id = intval($_SESSION['user_id']);  // Get the user_id from the session
+    $sql = "SELECT t.*, f.file_source as file_source 
+        FROM tracks t 
+        JOIN files f ON t.user_id = f.user_id AND t.track_id = f.track_id
+        WHERE t.user_id = :user_id";
+
     $stmt1 = $db->prepare($sql);
-    $stmt1->bindParam(":user_id", $user_id, PDO::PARAM_STR);
+    $stmt1->bindParam(":user_id", $user_id, PDO::PARAM_INT);  // Use PARAM_INT for numeric values
     $stmt1->execute();
     $row = $stmt1->fetchAll();
+
 }
 
 unset($db);
@@ -350,6 +358,7 @@ unset($db);
                                 <th>ID</th>
                                 <th>Filename</th>
                                 <th>Timestamp</th>
+                                <th>File source</th>
                                 <th>Type</th>
                                 <th>Original</th>
                                 <th>Mapmatched</th>
@@ -366,6 +375,7 @@ unset($db);
                                     echo "<td>" . $row_tmp['track_id'] . "</td>";
                                     echo "<td>" . $row_tmp['filename'] . "</td>";
                                     echo "<td>" . $row_tmp['timestamp'] . "</td>";
+                                    echo "<td>" . $row_tmp['file_source'] . "</td>";
                                     if ($row_tmp['type'] === 'Walk') {
                                         echo "<td>" . '<i class="bi bi-person"></i>' . "</td>";
                                     } elseif ($row_tmp['type'] === 'Drive') {
@@ -553,7 +563,7 @@ unset($db);
     let table = new DataTable('#myTable', {
         paging: true,
         columnDefs: [
-            { orderable: false, targets: [0, 4, 5, 6, 7] } // Disable sorting on columns 1, 5, 6, 7, 8
+            { orderable: false, targets: [0, 5, 6, 7, 8] } // Disable sorting on columns 1, 5, 6, 7, 8
         ],
         order: [[1, 'asc']], // Keep ordering on column 2 (index 1)
     });
