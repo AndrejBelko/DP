@@ -21,6 +21,7 @@ CREATE TABLE `hashcode`.`files` (
     `user_id` INT UNSIGNED NOT NULL,
     `name` VARCHAR(512) NOT NULL,
     `path` VARCHAR(512) NOT NULL,
+    `file_source` VARCHAR(64) NOT NULL,
      PRIMARY KEY (`id`));
 
 ALTER TABLE `hashcode`.`files` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
