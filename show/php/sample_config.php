@@ -9,4 +9,5 @@ $hostname = 'localhost';
 $dbname = 'hashcode';
 $username = 'root';
 $password = 'root';
+$valhalla_container = "gps_valhalla"
 ?>

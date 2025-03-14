@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Define the input array for the Python script
         $input = [
-            'container' => "valhalla", // Container name
+            'container' => $valhalla_container, // Container name
             'username' => $username, // Ensure $username is defined
             'parameters' => json_decode($parametersJson, true), // Decode back to array
             'file' => $target_file, // Ensure $gpx_file is defined
