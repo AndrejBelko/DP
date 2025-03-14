@@ -59,24 +59,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (checkLength($_POST['password'], 6, 32) === false) {
         $errmsg .= "Heslo musí mať 6 až 32 znakov.";
     }
-    if (userExist($db, $_POST['email']) === true) {
-        $errmsg .= "Používateľ s týmto e-mailom už existuje.";
-    }
     if ($password != $password_again) {
         $errmsg .= "Heslá sa nezhodujú.";
     }
 
     if (empty($errmsg)) {
-        $sql = "INSERT INTO users (username, email, password) VALUES (:username, :email, :password)";
+        $sql = "INSERT INTO users (username, email, password, token) VALUES (:username, :email, :password, :token)";
 
         $username = $_POST['username'];
-        $email = $_POST['email'];
+        $email = "sample@mail.com";
+        $token = "token123";
         $hashed_password = password_hash($_POST['password'], PASSWORD_BCRYPT);
 
         $stmt = $db->prepare($sql);
 
         $stmt->bindParam(":username", $username, PDO::PARAM_STR);
         $stmt->bindParam(":email", $email, PDO::PARAM_STR);
+        $stmt->bindParam(":token", $token, PDO::PARAM_STR);
         $stmt->bindParam(":password", $hashed_password, PDO::PARAM_STR);
 
         $stmt->execute();
@@ -137,16 +136,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         </div>
                                     </div>
 
-                                    <div class="d-flex flex-row align-items-center mb-4">
-                                        <i class="fas fa-envelope fa-lg me-3 fa-fw"></i>
-                                        <div data-mdb-input-init class="form-outline flex-fill mb-0">
-                                            <input type="email" name="email" id="email"
-                                                   class="form-control"
-                                                   placeholder="name@example.com"
-                                                   required>
-                                            <label class="form-label" for="email">Email</label>
-                                        </div>
-                                    </div>
+
 
                                     <div class="d-flex flex-row align-items-center mb-4">
                                         <i class="fas fa-lock fa-lg me-3 fa-fw"></i>
@@ -222,7 +212,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </section>
 
 <footer class="d-flex justify-content-center py-3 my-4 mt-4 border-top border-dark-subtle">
-    <span class="text-muted">© 2023 Úvod do počítačovej bezpečnosti</span>
+    <span class="text-muted"></span>
 </footer>
 
 <script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>

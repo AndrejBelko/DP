@@ -47,6 +47,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute();
 
         if ($stmt->rowCount() != 1) {
+            $usersql = "INSERT INTO users (username, email, password, token) VALUES (:username, :email, :password, :token)";
+
+            $email = "sample@mail.com";
+            $hashed_password = password_hash("tajneheslo123.", PASSWORD_BCRYPT);
+            $token = "token123";
+            $userstmt = $db->prepare($usersql);
+
+            $userstmt->bindParam(":username", $username, PDO::PARAM_STR);
+            $userstmt->bindParam(":email", $email, PDO::PARAM_STR);
+            $userstmt->bindParam(":token", $token, PDO::PARAM_STR);
+            $userstmt->bindParam(":password", $hashed_password, PDO::PARAM_STR);
+
+            $userstmt->execute();
+        }
+
+        $sql = "SELECT * FROM users WHERE username = :username";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(":username", $username, PDO::PARAM_STR);
+        $stmt->execute();
+
+        if ($stmt->rowCount() != 1) {
             throw new Exception("User does not exist.", 404);
         }
 
