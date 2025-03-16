@@ -17,7 +17,7 @@ def runQuery(patterns, start_pos, end_pos, max_gap, min_match, dbName, type, use
         "INSERT INTO hladac (kod) VALUES ('" + "'),('".join(patterns)+ "')"
     )
     mycursor.execute(
-                f"select p.track_id as track, h.id as q_id from path p inner join hladac h on h.kod = p.geohash where p.mapmatched = {type} order by p.track_id, p.id; "
+                f"select p.track_id as track, h.id as q_id from path p inner join hladac h on h.kod = p.geohash where p.mapmatched = {type} and p.user_id = {user_id} order by p.track_id, p.id; "
             )
 
     myresult = pd.DataFrame(mycursor.fetchall(), columns=['id', 'pos'])

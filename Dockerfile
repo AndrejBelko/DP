@@ -36,6 +36,9 @@ RUN npm install
 # create db, mapmatched, uploads dirs in data/import/files
 
 # BUILD IMAGE AND CREATE CONTAINER
+# docker run -dit --name valhalla --network web_server -p 8002:8002 -e tile_urls="https://download.geofabrik.de/europe/slovakia-latest.osm.pbf https://download.geofabrik.de/europe/czech-republic-latest.osm.pbf" ghcr.io/gis-ops/docker-valhalla/valhalla:latest
+
+# BUILD IMAGE AND CREATE CONTAINER
 # docker build -t search .
 # docker run -dit -v C:\Users\maros\Documents\dockeer\mcomputing\search_web\show:/var/www/html/ -v C:\Users\maros\Documents\dockeer\mcomputing\search_web\data:/home/data --name search_gps -p 8090:80 search 
 

@@ -45,10 +45,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $filename = $names[$x];
             $tmp_name = $tmp_names[$x];
             if (isset($_FILES['trexfiles']) && pathinfo($filename, PATHINFO_EXTENSION) != 'gpx') {
-                $infomsg = "Please upload a valid GPX file.";
+                $infomsg .= $filename . "is not a GPX file.\n";
                 break;
             } else if (isset($_FILES['files']) && strtolower(pathinfo($filename, PATHINFO_EXTENSION)) != 'csv') {
-                $infomsg = "Please upload a valid csv file.";
+                $infomsg .= $filename . "is not a CSV file.\n";
                 break;
             }
 
@@ -75,6 +75,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 // Check if the CSV file was generated
                 if (file_exists($csv_file)) {
+
+                    $rowCount = 0;
+                    if (($handle = fopen($csv_file, "r")) !== false) {
+                        while (($data = fgetcsv($handle)) !== false) {
+                            $rowCount++;
+                            if ($rowCount > 2) { // Stop early if we have more than 2 rows
+                                break;
+                            }
+                        }
+                        if ($rowCount === 2) {
+                            fclose($handle);
+                            $infomsg .= "Failed to process file: " . $csv_name . "\n";
+                            continue;
+                        }
+                    }
+                    echo $rowCount;
 
                     // Insert file information into the database
                     $sql = "SELECT id FROM users WHERE username = :username";
@@ -106,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                     $command = escapeshellcmd("python3 /var/www/html/track_to_database.py $filename $csv_file $username $pouzivatel_id 0 $type $track_id" . " dataset");
                     $output = shell_exec($command . " 2>&1");
-
+                    // echo $output;
                     $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
                     exec($command, $output, $return_var);
 
@@ -144,11 +160,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $pythonScript = "python3 /var/www/html/mapmatch.py '$jsonInput'";
 
                     // Execute the Python script
-                    exec($pythonScript, $output, $return_var);
+                    $output = shell_exec($pythonScript . " 2>&1");
+                    //echo $output;
 
                     $command = escapeshellcmd("python3 /var/www/html/interpolate.py $csv_file");
                     $output = shell_exec($command . " 2>&1");
-                    echo $output;
+                    // echo $output;
 
                 } else {
                     $infomsg = "Error: CSV file not generated.";
