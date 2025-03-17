@@ -210,7 +210,123 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $infomsg = "No file selected or an error occurred.";
         }
-    } else {
+
+    } elseif(isset($_POST['form_action'])){
+
+        $sql = "SELECT id FROM users WHERE username = :username";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(":username", $_SESSION["username"], PDO::PARAM_STR);
+        $stmt->execute();
+        $row = $stmt->fetch();
+        $pouzivatel_id = $row["id"];
+
+        $sql = "DELETE FROM path WHERE user_id = :user_id";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(":user_id", $pouzivatel_id, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $sql = "DELETE FROM tracks WHERE user_id = :user_id";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(":user_id", $pouzivatel_id, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $sql = "SELECT path, file_source FROM files WHERE user_id = :user_id";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(":user_id", $pouzivatel_id, PDO::PARAM_STR);
+        $stmt->execute();
+        $row = $stmt->fetchAll();
+
+        for ($x = 0; $x < sizeof($row); $x++) {
+            $path = $row[$x]["path"];
+            $filename = basename($path);
+
+            // Create CSV file name by replacing .gpx with .csv
+            $csv_name = pathinfo($filename, PATHINFO_FILENAME) . '.csv';
+            $csv_file = $path;  // Set the CSV output path with same name
+            $file_source = $row[$x]["file_souce"];
+
+
+            // Check if the CSV file was generated
+            if (file_exists($csv_file)) {
+
+                $rowCount = 0;
+                if (($handle = fopen($csv_file, "r")) !== false) {
+                    while (($data = fgetcsv($handle)) !== false) {
+                        $rowCount++;
+                        if ($rowCount > 2) { // Stop early if we have more than 2 rows
+                            break;
+                        }
+                    }
+                    if ($rowCount === 2) {
+                        fclose($handle);
+                        $infomsg .= "Failed to process file: " . $csv_name . "\n";
+                        continue;
+                    }
+                }
+
+                $sql = "SELECT max(track_id) as 'track_id' FROM path WHERE user_id = :user_id";
+                $stmt = $db->prepare($sql);
+                $stmt->bindParam(":user_id", $pouzivatel_id, PDO::PARAM_STR);
+                $stmt->execute();
+                $row_track = $stmt->fetch();
+                $track_id = strval($row_track["track_id"] + 1);
+
+                $username = $_SESSION['username'];
+                $type = isset($_POST['trajectoryType']) ? 'Drive' : 'Walk';
+
+                $command = escapeshellcmd("python3 /var/www/html/track_to_database.py $filename $csv_file $username $pouzivatel_id 0 $type $track_id" . " dataset");
+                $output = shell_exec($command . " 2>&1");
+                // echo $output;
+                $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
+                exec($command, $output, $return_var);
+
+//                $gpsAccuracy = $_POST['gps_accuracy'];
+//                $searchRadius = $_POST['search_radius'];
+//                $turnPenalty = $_POST['turn_penalty_factor'];
+//                $walk = $_POST['type'];
+
+                // Define parameters
+                $params = [
+                    'type' => $type,
+                    'gps_accuracy' => "5", // Ensure $gpsAccuracy is defined
+                    'search_radius' => "50", // Ensure $searchRadius is defined
+                    'turn_penalty_factor' => "300" // Ensure $turnPenalty is defined
+                ];
+
+                // Convert the parameters array to JSON
+                $parametersJson = json_encode($params, JSON_PRETTY_PRINT);
+
+                // Define the input array for the Python script
+                $input = [
+                    'container' => $valhalla_container, // Container name
+                    'username' => $username, // Ensure $username is defined
+                    'parameters' => json_decode($parametersJson, true), // Decode back to array
+                    'file' => $path, // Ensure $gpx_file is defined
+                    'filename' => $filename,
+                    'user_id' => $pouzivatel_id,
+                    'track_id' => $track_id
+                ];
+
+                // Convert the input array to JSON
+                $jsonInput = json_encode($input, JSON_PRETTY_PRINT);
+
+                // Define the Python script command
+                $pythonScript = "python3 /var/www/html/mapmatch.py '$jsonInput'";
+
+                // Execute the Python script
+                $output = shell_exec($pythonScript . " 2>&1");
+                //echo $output;
+
+                $command = escapeshellcmd("python3 /var/www/html/interpolate.py $csv_file");
+                $output = shell_exec($command . " 2>&1");
+                // echo $output;
+
+            } else {
+                $infomsg = "Error: CSV file not generated.";
+            }
+        }
+
+    }else {
         $infomsg = "No file uploaded or an error occurred.";
     }
 }
@@ -338,6 +454,19 @@ unset($db);
                         <div class="nav-link fs-5" id="token" data-bs-toggle="modal" data-bs-target="#exampleModal">
                             Security token
                         </div>
+                    </li>
+                    <li>
+                        <div class="modal-body">
+                            <form action="profile.php" method="POST" id="formReloadDB1">
+                                <input type="hidden" name="form_action" value="form1">
+                                <!-- Add other form fields if needed -->
+                            </form>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary" form="formReloadDB1">Save changes (Form 1)</button>
+                        </div>
+
                     </li>
                 </ul>
             </div>

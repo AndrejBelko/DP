@@ -3,7 +3,7 @@ import libgeohash as gh
 import geojson
 import json
 from shapely import geometry
-
+import sys
 
 def geohash_to_polygon(geohash):
     """Convert a geohash to a Shapely polygon."""
@@ -29,8 +29,8 @@ def generate_geojson(geohash_list):
 
 
 # Load geohashes from CSV
-db_name = "test"
-path = f"../data/import/files/db/{db_name}/{db_name}_path.csv"
+db_name = sys.argv[1]
+path = f"/home/data/import/files/db/{db_name}/{db_name}_path.csv"
 df = pd.read_csv(path, sep=';')
 geohash_list = df['geohash'].unique().tolist()
 
@@ -38,12 +38,12 @@ geohash_list = df['geohash'].unique().tolist()
 geojson_data = generate_geojson(geohash_list)
 
 # Save the GeoJSON file
-output_geojson_path = f'coverage/{db_name}.geojson'
+output_geojson_path = f'/var/www/html/coverage/{db_name}.geojson'
 with open(output_geojson_path, 'w') as f:
     geojson.dump(geojson_data, f)
 
 # Save geohash list as JSON
-output_json_path = f"coverage/{db_name}_components.json"
+output_json_path = f"/var/www/html/coverage/{db_name}_components.json"
 with open(output_json_path, "w") as outfile:
     json.dump(geohash_list, outfile)
 
