@@ -233,11 +233,6 @@ unset($db);
                             <a class="nav-link fs-5" href="php/login.php">Login</a>
                         </li>
                     <?php endif; ?>
-                    <div class="modal-body">
-                        <form action="index.php" method="post" id="formSecToken">
-                        </form>
-                        <button type="submit" class="btn btn-primary" form="formSecToken">Save changes</button>
-                    </div>
                 </ul>
 
             </div>
