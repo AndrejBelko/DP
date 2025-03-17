@@ -221,12 +221,6 @@ unset($db);
                     <li class="nav-item">
                         <a class="nav-link fs-5" href="php/profile.php">Profile</a>
                     </li>
-                    <!--                    <li class="nav-item">-->
-                    <!--                        <a class="nav-link fs-5" href="upload.php">Nahranie nových trajektórií</a>-->
-                    <!--                    </li>-->
-                    <!--                    <li class="nav-item">-->
-                    <!--                        <a class="nav-link fs-5" href="pdf.php">Príručka</a>-->
-                    <!--                    </li>-->
                     <?php if (isset($_SESSION['username']) && $_SESSION['loggedin'] === true): ?>
                         <li class="nav-item">
                             <a class="nav-link fs-5" href="php/logout.php">Log out</a>
@@ -239,6 +233,11 @@ unset($db);
                             <a class="nav-link fs-5" href="php/login.php">Login</a>
                         </li>
                     <?php endif; ?>
+                    <div class="modal-body">
+                        <form action="index.php" method="post" id="formSecToken">
+                        </form>
+                        <button type="submit" class="btn btn-primary" form="formSecToken">Save changes</button>
+                    </div>
                 </ul>
 
             </div>
@@ -426,7 +425,6 @@ unset($db);
 
 
     var queryDB = "<?php echo $queryDB; ?>";
-    console.log(queryDB)
     var map = L.map('map').setView([<?php echo $DBinfo['center']['lat'] . ", " . $DBinfo['center']['lon'];?>], 13);
 
     var gdata;
@@ -966,7 +964,7 @@ unset($db);
         if (interpolated.length < 2) {
             return;
         }
-
+        console.log(interpolated)
         $.ajax({
             method: "POST",
             url: "php/geohash_py.php",
@@ -1049,9 +1047,7 @@ unset($db);
     }
 
     function showAllPaths() {
-        console.log(mapmatched)
         if (queryDB !== " ") {
-            console.log(queryDB)
             $.ajax({
                 method: "POST",
                 url: "php/show_all_tracks.php",
@@ -1072,7 +1068,6 @@ unset($db);
                         "type": "FeatureCollection",
                         "features": json.map(function myFunction(item) {
                             var x = JSON.parse(item[1]);
-                            console.log(x)
                             x.properties['id'] = item[0];
                             return x;
                         })
@@ -1132,8 +1127,18 @@ unset($db);
 
     if (queryDB !== " "){
         $.getJSON("coverage/<?php echo $DBinfo['dbname']?>.geojson", function (data) {
-            L.geoJSON(data).addTo(map);
+            L.geoJSON(data, {
+                style: function (feature) {
+                    return {
+                        weight: 0,  // Removes the border by setting weight to 0
+                        color: 'transparent', // Optionally set the border color to transparent
+                        fillColor: '#3388ff', // You can still control the fill color
+                        fillOpacity: 0.5 // You can adjust the opacity of the fill if needed
+                    };
+                }
+            }).addTo(map);
         });
+
     }
 
     function showResults1() {
