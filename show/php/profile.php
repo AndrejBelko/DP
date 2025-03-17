@@ -464,7 +464,7 @@ unset($db);
                         </div>
 
                         <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary" form="formReloadDB1">Save changes (Form 1)</button>
+                            <button type="submit" class="btn btn-primary" form="formReloadDB1">Reload DB</button>
                         </div>
 
                     </li>
