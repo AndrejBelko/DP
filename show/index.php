@@ -160,6 +160,12 @@ unset($db);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
 
+    <link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-1.13.7/b-2.4.2/b-colvis-2.4.2/b-html5-2.4.2/b-print-2.4.2/date-1.5.1/r-2.5.0/sc-2.3.0/sb-1.6.0/sp-2.2.0/sl-1.7.0/datatables.min.css" rel="stylesheet">
+
+    <script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-1.13.7/b-2.4.2/b-colvis-2.4.2/b-html5-2.4.2/b-print-2.4.2/date-1.5.1/r-2.5.0/sc-2.3.0/sb-1.6.0/sp-2.2.0/sl-1.7.0/datatables.min.js"></script>
+
+
+
     <style>
         html, body {
             height: 100%;
@@ -198,6 +204,49 @@ unset($db);
         header {
             height: 65px;
         }
+
+        #results {
+            width: 100%;
+            overflow-x: auto; /* Ensures horizontal scrolling if the table overflows */
+        }
+
+        /* Optional: Add some padding/margins to make sure the table isn't cramped */
+        table.dataTable {
+            width: 100% !important; /* Force DataTables to use 100% width */
+            margin-top: 20px;       /* Optional styling */
+            margin-bottom: 20px;    /* Optional styling */
+        }
+
+        /* Apply a different background color for every other row */
+        table.dataTable tbody tr:nth-child(odd) {
+            background-color: #f9f9f9; /* Light gray color for odd rows */
+        }
+
+        table.dataTable tbody tr:nth-child(even) {
+            background-color: #ffffff; /* White color for even rows */
+        }
+
+        /* Make sure the table doesn't overflow horizontally */
+        .dataTable {
+            width: 100% !important; /* Make the table take full width of its container */
+            table-layout: fixed; /* Fix the table layout to avoid expanding columns */
+            overflow: hidden;
+        }
+
+        .dataTables_wrapper .row{
+            display: grid;
+            width: 100%;
+            justify-content: center !important; /* Center horizontally */
+            align-items: center;     /* Center vertically (optional) */
+        }
+        .dataTables_paginate .pagination{
+            justify-content: flex-start !important; /* Center horizontally */
+        }
+
+        .dataTables_info{
+            display: none !important;
+        }
+
 
     </style>
 </head>
@@ -303,9 +352,8 @@ unset($db);
                     <button class="btn btn-secondary btn-sm" onclick="showAll()">Show all</button>
                 </p>
                 <div style="height: fit-content; overflow-y:auto;">
-                    <table class="table table-hover table-striped" id="datatable">
-                        <tbody id="results"></tbody>
-                    </table>
+                    <div id="results">
+                    </div>
                 </div>
             </div>
         </div>
@@ -356,7 +404,7 @@ unset($db);
     </div>
 </div>
 
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     var chart = new CanvasJS.Chart("chartContainer", {
         theme: "light2", // "light1", "light2", "dark1", "dark2"
@@ -765,14 +813,14 @@ unset($db);
         const height = maxY - minY;
 
         // Calculate the scaling factor for the polyline.
-        const xScale = svgWidth / width;
-        const yScale = svgHeight / height;
+        const xScale = (svgWidth / width) * 0.9;
+        const yScale = (svgHeight / height) * 0.9;
         const scale = Math.min(xScale, yScale);
 
         // Calculate the points for the SVG polyline by scaling the polyline coordinates.
         const scaledPoints = coordinates.map(coord => {
-            const x = (coord[0] - minX) * scale;
-            const y = (coord[1] - minY) * scale;
+            const x = (coord[0] - minX) * scale + 5;
+            const y = (coord[1] - minY) * scale + 5;
             return `${x},${y}`;
         }).join(' ');
 
@@ -795,7 +843,6 @@ unset($db);
     }
 
     function showResults() {
-
         graphButton.addTo(map);
         $("#resultsbox").show();
         $("#chartContainer").show();
@@ -828,30 +875,76 @@ unset($db);
         match_number = 0;
         match_count = 0;
 
-        for (var i in gdata) {
-            var dateObj = new Date(gdata[i][7]);
-            var formattedDate = dateObj.getFullYear() + '-' +
-                String(dateObj.getMonth() + 1).padStart(2, '0') + '-' +
-                String(dateObj.getDate()).padStart(2, '0') + ' ' +
-                String(dateObj.getHours()).padStart(2, '0') + ':' +
-                String(dateObj.getMinutes()).padStart(2, '0') + ':' +
-                String(dateObj.getSeconds()).padStart(2, '0');
-            //x+= "<tr><td><div id='mapArea"+i+"' style='width:80px;height:80px;' onclick=\"showTrack("+i+")\"></div></td><td>"+gdata[i][1]+"</td><td>"+gdata[i][2]+"</td><td>"+gdata[i][3]+"</td><td>"+gdata[i][4]+"</td></tr>";
-            //x+= "<tr><td><div id='mapArea"+i+"' style='width:80px;height:80px;' onclick=\"showTrack("+i+")\"></div></td><td><div onclick=\"showTrack("+i+")\">Track ID: <b>"+gdata[i][0]+"</b><br>Matched fields: <b>"+gdata[i][1]+"</b> ("+gdata[i][5]+")<br>Starting box: <b>"+gdata[i][2]+"</b><br>Ending box: <b>"+gdata[i][3]+"</b><br>Gaps: <b>"+gdata[i][4]+"</b><br></div></td></tr>"
-            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;padding-top=30%;' onclick=\"showTrack(" + i + ")\"></div></td><td><div onclick=\"showTrack(" + i + ")\"><h6><b>" + formattedDate + "</b></h6>Path stars on box <b>" + gdata[i][2] + "</b> and ends on box <b>" + gdata[i][3] + "</b><br>In total, <b>" + gdata[i][1] + "</b> fields matched, with <b>" + gdata[i][4] + "</b> gaps<br>Matched fields: <b>" + gdata[i][5] + "</b></div></td></tr>";
-            graph2_array[1].push(i);
-            graph2_array[0].push(gdata[i][1]);
-            for (var j in gdata[i][5]) {
-                graph_array.push(gdata[i][5][j]);
-            }
-        }
+        // Create a table structure for DataTable
+        var $table = $('<table class="result-table display"></table>'); // Add "display" class for DataTable styling
+        var $thead = $('<thead><tr><th>Map</th><th>Details</th></tr></thead>'); // Table header
+        var $tbody = $('<tbody></tbody>');
 
+        gdata.forEach(function(item, index) {
+            var dateObj = new Date(item[7]);
+            var formattedDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}:${String(dateObj.getSeconds()).padStart(2, '0')}`;
+
+            var $tr = $('<tr class="result-item"></tr>').attr('id', item[0]);
+
+            var $td1 = $('<td></td>');
+            var $div1 = $('<div id="mapArea' + index + '" style="width:150px;height:80px;"></div>').on('click', function() {
+                showTrack(index);
+            });
+            $td1.append($div1);
+
+            var $td2 = $('<td></td>');
+            var $div2 = $('<div></div>').on('click', function() {
+                showTrack(index);
+            });
+            var $h6 = $('<h6><b>' + formattedDate + '</b><br>Path starts on box <b>' + item[2] + '</b> and ends on box <b>' + item[3] + '</b><br>In total, <b>' + item[1] + '</b> fields matched, with <b>' + item[4] + '</b> gaps<br>Matched fields: <b>' + item[5] + '</b></h6>');
+            $div2.append($h6);
+            $td2.append($div2);
+
+            $tr.append($td1, $td2);
+            $tbody.append($tr);
+
+            // Populate graph data
+            graph2_array[1].push(index);
+            graph2_array[0].push(item[1]);
+            for (var j in item[5]) {
+                graph_array.push(item[5][j]);
+            }
+        });
+
+        $table.append($thead, $tbody); // Append header and body
+        $('#results').html($table).removeClass('row');
+        $('#totalfound').text(gdata.length);
+
+        // Initialize DataTable with pagination and search features
+        var table = $table.DataTable({
+            paging: true,
+            searching: true,
+            ordering: false,
+            info: true,
+            responsive: true,
+        });
+
+        // Handle drawing tracks for the visible rows based on current DataTable page
+        table.on('draw', function() {
+            var info = table.page.info();
+            var start = info.start;
+            var end = info.end;
+
+            // Draw tracks for rows on the current page
+            for (var i = start; i < end; i++) {
+                drawTrackScaledWithoutZoom(JSON.parse(gdata[i][6]).geometry.coordinates, 80, 80, i);
+            }
+        });
+
+        // Trigger the draw event to draw tracks when the table is first initialized
+        table.draw();
+
+        // Reset chart data and render graphs
         graph_array.sort();
 
         for (var i in graph_array) {
             if (graph_array[i] === point) {
                 count = count + 1;
-                //console.log(graph_array[i]);
             } else {
                 graph_x_axis.push(point);
                 graph_y_axis.push(count);
@@ -883,6 +976,7 @@ unset($db);
         graph2_x_axis.push(match_number);
         graph2_y_axis.push(match_count);
 
+        // Update chart data
         for (var i in graph_x_axis) {
             dps.push({
                 x: graph_x_axis[i],
@@ -896,20 +990,18 @@ unset($db);
                 y: graph2_y_axis[i]
             });
         }
-        $("#totalfound").html(gdata.length);
-        $("#results").html(x);
 
-        for (i in gdata) {
-            drawTrackScaledWithoutZoom(JSON.parse(gdata[i][6]).geometry.coordinates, 80, 80, i);
-        }
         chart.options.data[0].dataPoints = dps;
         chart2.options.data[0].dataPoints = dps2;
         chart.render();
         chart2.render();
+
+        // Clear data arrays for future use
         dps = [];
         dps2 = [];
         isFirstToDisplay = 0;
     }
+
 
     function showTrack(id) {
         if (geoAllResult != null) {
@@ -1137,7 +1229,6 @@ unset($db);
     }
 
     function showResults1() {
-
         graphButton.addTo(map);
         $("#resultsbox").show();
         $("#chartContainer").show();
@@ -1170,30 +1261,69 @@ unset($db);
         match_number = 0;
         match_count = 0;
 
-        for (var i in gdata) {
-            var dateObj = new Date(gdata[i][4]);
-            var formattedDate = dateObj.getFullYear() + '-' +
-                String(dateObj.getMonth() + 1).padStart(2, '0') + '-' +
-                String(dateObj.getDate()).padStart(2, '0') + ' ' +
-                String(dateObj.getHours()).padStart(2, '0') + ':' +
-                String(dateObj.getMinutes()).padStart(2, '0') + ':' +
-                String(dateObj.getSeconds()).padStart(2, '0');
-            x += "<tr class='result-item' id='" + gdata[i][0] + "'><td><div id='mapArea" + i + "' style='width:80px;height:80px;padding-top=30%;' onclick=\"showTrack1(" + i + ")\"></div></td><td><div onclick=\"showTrack1(" + i + ")\"><h6><b>" + formattedDate + "</b><br>Type: <b>" + gdata[i][3] + "</b><br> Length: <b>" + gdata[i][5] + " m</div></td></tr>";
-        }
+        var $table = $('<table class="result-table display"></table>'); // Add "display" class for DataTables styling
+        var $thead = $('<thead><tr><th>Map</th><th>Details</th></tr></thead>'); // Define the table header
+        var $tbody = $('<tbody></tbody>');
 
-        $("#totalfound").html(gdata.length);
-        $("#results").html(x);
+        gdata.forEach(function(item, index) {
+            var dateObj = new Date(item[4]);
+            var formattedDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}:${String(dateObj.getSeconds()).padStart(2, '0')}`;
 
-        for (i in gdata) {
-            drawTrackScaledWithoutZoom(JSON.parse(gdata[i][1]).geometry.coordinates, 80, 80, i);
-        }
+            var $tr = $('<tr class="result-item"></tr>').attr('id', item[0]);
 
-        // chart.render();
-        // chart2.render();
+            var $td1 = $('<td></td>');
+            var $div1 = $('<div id="mapArea' + index + '" style="width:150px;height:80px;"></div>').on('click', function() {
+                showTrack1(index);
+            });
+            $td1.append($div1);
+
+            var $td2 = $('<td></td>');
+            var $div2 = $('<div></div>').on('click', function() {
+                showTrack1(index);
+            });
+            var $h6 = $('<h6><b>' + formattedDate + '</b><br>Type: <b>' + item[3] + '</b><br> Length: <b>' + item[5] + ' m</b></h6>');
+            $div2.append($h6);
+            $td2.append($div2);
+
+            $tr.append($td1, $td2);
+            $tbody.append($tr);
+        });
+
+        $table.append($thead, $tbody); // Append the header along with the body
+        $('#results').html($table).removeClass('row');
+        $('#totalfound').text(gdata.length);
+
+        // Initialize DataTable after appending to DOM
+        var table = $table.DataTable({
+            paging: true,          // Enables pagination
+            searching: true,       // Enables search box
+            ordering: false,        // Enables column sorting
+            info: true,            // Displays table info (e.g., "Showing 1 to 10 of 100 entries")
+            responsive: true,      // Make the table responsive on different screen sizes
+        });
+
+        // Draw tracks for the visible rows based on the current DataTable page
+        table.on('draw', function() {
+            // Loop through only the visible rows on the current page
+            var info = table.page.info();  // Get DataTable pagination info
+            var start = info.start;        // Index of the first row on the current page
+            var end = info.end;            // Index of the last row on the current page
+
+            // Draw tracks for rows in the current page
+            for (var i = start; i < end; i++) {
+                drawTrackScaledWithoutZoom(JSON.parse(gdata[i][1]).geometry.coordinates, 80, 80, i);
+            }
+        });
+
+        // Trigger the draw event to draw tracks when the table is first initialized
+        table.draw();
+
+        // Reset chart data
         dps = [];
         dps2 = [];
         isFirstToDisplay = 0;
     }
+
 
     function showTrack1(id) {
         if (geoAllResult != null) {
