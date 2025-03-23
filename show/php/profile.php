@@ -90,7 +90,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             continue;
                         }
                     }
-                    echo $rowCount;
 
                     // Insert file information into the database
                     $sql = "SELECT id FROM users WHERE username = :username";
@@ -122,9 +121,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                     $command = escapeshellcmd("python3 /var/www/html/track_to_database.py $filename $csv_file $username $pouzivatel_id 0 $type $track_id" . " dataset");
                     $output = shell_exec($command . " 2>&1");
-                    // echo $output;
+                    echo $output;
+
                     $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
-                    exec($command, $output, $return_var);
+
+                    $output = shell_exec($command . " 2>&1");
+                    echo $output;
 
 //                $gpsAccuracy = $_POST['gps_accuracy'];
 //                $searchRadius = $_POST['search_radius'];
@@ -161,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                     // Execute the Python script
                     $output = shell_exec($pythonScript . " 2>&1");
-                    //echo $output;
+                    echo $output;
 
                     $command = escapeshellcmd("python3 /var/www/html/interpolate.py $csv_file");
                     $output = shell_exec($command . " 2>&1");
@@ -278,7 +280,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $output = shell_exec($command . " 2>&1");
                 // echo $output;
                 $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
-                exec($command, $output, $return_var);
+                $output = shell_exec($command . " 2>&1");
+                // echo $output;
 
 //                $gpsAccuracy = $_POST['gps_accuracy'];
 //                $searchRadius = $_POST['search_radius'];
@@ -312,8 +315,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 // Define the Python script command
                 $pythonScript = "python3 /var/www/html/mapmatch.py '$jsonInput'";
-
-                // Execute the Python script
                 $output = shell_exec($pythonScript . " 2>&1");
                 //echo $output;
 
@@ -385,13 +386,15 @@ unset($db);
 
         @media (max-width: 768px) {
             .table-wrapper {
-                transform: scale(0.8); /* Scale down to 80% */
+                transform: scale(0.8);
+                transform-origin: top center; /* Scale from the top */
             }
         }
 
         @media (max-width: 480px) {
             .table-wrapper {
-                transform: scale(0.6); /* Scale down to 60% */
+                transform: scale(0.6);
+                transform-origin: top center; /* Scale from the top */
             }
         }
 
@@ -486,11 +489,9 @@ unset($db);
         </button>
     </div>
     <form id="actionForm" method="POST" action="profile.php">
-        <div class="container">
-            <div class="row">
                 <div class="col-12 col-md-10 mx-auto">
                     <div class="table-wrapper">
-                        <div class="d-flex justify-content-start mt-2">
+                        <div class="d-flex justify-content-start">
                             <!-- "Check All" Button -->
                             <button type="button" id="checkAllBtn" class="btn btn-primary btn-sm m-3" onclick="checkAllCheckboxes()">Select All</button>
                             <button type="submit" name="action" value="download_orig" class="btn btn-success m-3">Download Selected Original</button>
@@ -530,8 +531,10 @@ unset($db);
                                         echo $row_tmp['type']; // Fallback for other types
                                     }
                                     echo "<td>
+                                    <div class='d-flex gap-2'>
                                     <a href='delete.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
                                     <a href='download.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."&mapmatched=0' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
+                                    </div>
                                   </td>";
 
                                     if (isset($row[$i + 1])) {
@@ -555,8 +558,6 @@ unset($db);
                         </table>
                     </div>
                 </div>
-            </div>
-        </div>
     </form>
 
     <div id="speedchart" class="chartdiv"></div>
@@ -712,6 +713,8 @@ unset($db);
             { orderable: false, targets: [0, 5, 6, 7, 8] } // Disable sorting on columns 1, 5, 6, 7, 8
         ],
         order: [[1, 'asc']], // Keep ordering on column 2 (index 1)
+        responsive: true,
+        autoWidth: false
     });
 
 
