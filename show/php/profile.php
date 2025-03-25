@@ -44,6 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         for ($x = 0; $x < sizeof($names); $x++) {
             $filename = $names[$x];
             $tmp_name = $tmp_names[$x];
+            $filename = str_replace(' ', '', $filename);
+            $tmp_name = str_replace(' ', '', $tmp_name);
             if (isset($_FILES['trexfiles']) && pathinfo($filename, PATHINFO_EXTENSION) != 'gpx') {
                 $infomsg .= $filename . "is not a GPX file.\n";
                 break;
