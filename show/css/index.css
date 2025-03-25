@@ -32,7 +32,7 @@ body {
 }
 
 .navbar {
-    z-index: 1;
+    z-index: 2;
 }
 
 .alg-form input {
