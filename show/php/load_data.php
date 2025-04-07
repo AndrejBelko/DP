@@ -7,6 +7,11 @@ if (!isset($_SESSION["username"]) || $_SESSION["loggedin"] !== true) {
 
 $username = $_SESSION['username'];
 $relativeFilePath = $_GET['file'] ?? '';
+
+if (strtolower(pathinfo($relativeFilePath, PATHINFO_EXTENSION)) != 'csv'){
+    $relativeFilePath = pathinfo($relativeFilePath, PATHINFO_FILENAME) . '.csv';
+}
+
 $filePath = "/home/data/import/files/uploads/" . $username . "/" . $relativeFilePath;
 
 if (!file_exists($filePath)) {
@@ -16,10 +21,10 @@ if (!file_exists($filePath)) {
 
 $gpsData = [];
 $header = null;
-
 if (($handle = fopen($filePath, "r")) !== FALSE) {
     // Read the header row first
     if (($headerRow = fgetcsv($handle, 1000, ",")) !== FALSE) {
+
         // Normalize header names: lowercase and trim
         $normalizedHeader = array_map(function($col) {
             return strtolower(trim($col));
@@ -34,7 +39,8 @@ if (($handle = fopen($filePath, "r")) !== FALSE) {
             "longitude" => ["longitude", "lon", "longitude e/w"],
             "time" => ["time", "timestamp", "date"],
             "speed" => ["speed", "velocity"],
-            "height" => ["height", "altitude"]
+            "height" => ["height", "altitude"],
+            "hr" => ["hr"]
         ];
 
         // Match required columns to actual columns in the file
@@ -46,17 +52,16 @@ if (($handle = fopen($filePath, "r")) !== FALSE) {
                     break;
                 }
             }
-//            if (!isset($mappedColumns[$key])) {
-//                echo json_encode(["error" => "Missing required column for: $key"]);
-//                exit;
-//            }
         }
 
         // Read the rest of the rows
         while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
             $latitude = $data[$mappedColumns["latitude"]];
             $longitude = $data[$mappedColumns["longitude"]];
-            if (strlen($data[$mappedColumns["time"]]) > 10) {
+            if (strtotime($data[$mappedColumns["time"]]) !== false) {
+                // Handles ISO 8601 or other standard formats
+                $time = strtotime($data[$mappedColumns["time"]]);
+            } elseif (strlen($data[$mappedColumns["time"]]) > 10) {
                 // Unix timestamp in milliseconds
                 $timestampInSeconds = $data[$mappedColumns["time"]] / 1000;
                 $time = $timestampInSeconds; // Use directly or convert to readable date
@@ -65,9 +70,10 @@ if (($handle = fopen($filePath, "r")) !== FALSE) {
             } elseif (strlen($data[$mappedColumns["time"]]) === 5){
                 $time = strtotime('0'. $data[$mappedColumns["time"]]);
             }
+            $hr = $data[$mappedColumns["hr"]];
             $speed = $data[$mappedColumns["speed"]];
             $height = $data[$mappedColumns["height"]];
-            $gpsData[] = [$latitude, $longitude, $time, $speed, $height];
+            $gpsData[] = [$latitude, $longitude, $time, $speed, $height, $hr];
         }
     }
     fclose($handle);

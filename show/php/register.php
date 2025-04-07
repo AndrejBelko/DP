@@ -1,10 +1,7 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-error_reporting(E_WARNING);
 require_once('config.php');
 session_start();
+$errmsg = "";
 
 try {
     $db = new PDO("mysql:host=$hostname;dbname=$dbname", $username, $password);
@@ -13,15 +10,7 @@ try {
     echo $e->getMessage();
 }
 
-function checkEmpty($field)
-{
-    if (empty(trim($field))) {
-        return true;
-    }
-    return false;
-}
-
-function checkLength($field, $min, $max)
+function checkLength($field, $min, $max): bool
 {
     $string = trim($field);
     $length = strlen($string);
@@ -31,15 +20,24 @@ function checkLength($field, $min, $max)
     return true;
 }
 
-function userExist($db, $email)
+function checkSpecialChar($password): bool
+{
+    return preg_match('/[!@#$%^&*()\-_=+{}\[\]:;"\'<>,.?\/\\|`~]/', $password) === 1;
+}
+
+
+function checkNumber($password): bool
+{
+    return preg_match('/[0-9]/', $password);
+}
+
+function userExist($db, $username): bool
 {
     $exist = false;
 
-    $param_email = trim($email);
-
-    $sql = "SELECT id FROM users WHERE email = :email";
+    $sql = "SELECT id FROM users WHERE username = :username";
     $stmt = $db->prepare($sql);
-    $stmt->bindParam(":email", $param_email, PDO::PARAM_STR);
+    $stmt->bindParam(":username", $username, PDO::PARAM_STR);
 
     $stmt->execute();
 
@@ -51,25 +49,37 @@ function userExist($db, $email)
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $errmsg = "";
 
+    $username = $_POST["username"];
     $password = $_POST['password'];
     $password_again = $_POST['password_again'];
 
-    if (checkLength($_POST['password'], 6, 32) === false) {
-        $errmsg .= "Heslo musí mať 6 až 32 znakov.";
-    }
-    if ($password != $password_again) {
-        $errmsg .= "Heslá sa nezhodujú.";
+    if (userExist($db, $username)) {
+        $errmsg .= "Username already exists. \n";
+    } else{
+        if (!checkLength($password, 6, 32)) {
+            $errmsg .= "Password must be 6 to 32 characters long. \n";
+        } else{
+            if (!checkNumber($password)) {
+                $errmsg .= "Password does not contain number. \n";
+            }
+
+            if (!checkSpecialChar($password)) {
+                $errmsg .= "Password does not contain special character. \n";
+            }
+
+            if ($password != $password_again) {
+                $errmsg .= "Passwords are not equal. \n";
+            }
+        }
     }
 
     if (empty($errmsg)) {
         $sql = "INSERT INTO users (username, email, password, token) VALUES (:username, :email, :password, :token)";
 
-        $username = $_POST['username'];
         $email = "sample@mail.com";
         $token = "token123";
-        $hashed_password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+        $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
         $stmt = $db->prepare($sql);
 
@@ -141,7 +151,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <div data-mdb-input-init class="form-outline flex-fill mb-0">
                                             <input type="password" name="password"
                                                    id="password" class="form-control"
-                                                   required class="form-control"/>
+                                                   required/>
                                             <label class="form-label" for="password">Password</label>
                                         </div>
                                     </div>
@@ -151,7 +161,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <div data-mdb-input-init class="form-outline flex-fill mb-0">
                                             <input type="password" name="password_again"
                                                    id="password_again" class="form-control"
-                                                   required class="form-control"/>
+                                                   required/>
                                             <label class="form-label" for="password_again">Repeat password</label>
                                         </div>
                                     </div>
@@ -192,7 +202,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
             <div class="toast-body">
-                <?php echo $errmsg; ?>
+                <?php echo nl2br($errmsg); ?>
             </div>
         </div>
     </div>

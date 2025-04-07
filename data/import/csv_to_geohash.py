@@ -207,15 +207,6 @@ def importData(dx1, dx2, dbName, directory_path):
     mycursor.executemany(sql, data)
     mydb.commit()
 
-#     mycursor.execute("SET GLOBAL local_infile=1;")
-#     print("importing tracks ...")
-#     mycursor.execute(f"load data local infile '{directory_path}/{dbName}_path.csv' into table `path` fields terminated by ';' lines terminated by '\n' ignore 1 lines (`geohash`, `track`, `mapmatched`,`timestamp`,`length`);")
-#     print("importing geojsons ...")
-#     mycursor.execute(f"load data local infile '{directory_path}/{dbName}_track.csv' into table `tracks` fields terminated by ';' lines terminated by '\n' ignore 1 lines (`route`, `track`, `mapmatched`,`timestamp`, `length`);")
-#     mydb.commit()
-#     mycursor.close()
-#     mydb.disconnect()
-
     
 if __name__ == '__main__':
     if len(sys.argv)<3:

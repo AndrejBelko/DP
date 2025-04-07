@@ -15,47 +15,48 @@ if (!isset($_SESSION["username"]) || $_SESSION["loggedin"] !== true) {
     exit;
 }
 
-if (isset($_GET['user_id']) && isset($_GET['track_ids']) && isset($_GET['mapmatched'])) {
+if (isset($_GET['track_ids']) && isset($_GET['mapmatched'])) {
     try {
         $db = new PDO("mysql:host=$hostname;dbname=$dbname", $username, $password);
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        // Sanitize the 'user_id' parameter
-        $user_id = (int) htmlspecialchars($_GET['user_id']); // Cast to int for safety
-        // Security check: Ensure the session user is the same
-        if ($_SESSION['user_id'] != $user_id) {
-            header("Location: profile.php");
-            exit;
-        }
+
+        $user_id = $_SESSION['user_id']; // Cast to int for safety
         $track_ids = $_GET['track_ids']; // Get the array of track IDs
         $mapmatched = (int) htmlspecialchars($_GET['mapmatched']); // Cast to int for safety
+
         $zipFileName = "routes_" . time() . ".zip"; // Unique ZIP file name
         $zipFilePath = "/tmp/$zipFileName"; // Store ZIP in a temporary location
         $zip = new ZipArchive();
+
         if ($zip->open($zipFilePath, ZipArchive::CREATE) !== TRUE) {
             die("Error: Unable to create ZIP file.");
         }
-        foreach ($track_ids as $track_id) {
-            $track_id = (int) $track_id; // Ensure it's an integer
-            echo $track_id;
 
-            // Fetch the geometry data from the database
-            $sql = "SELECT * FROM files WHERE track_id = :track_id AND user_id = :user_id";
-            $stmt = $db->prepare($sql);
-            $stmt->bindParam(':track_id', $track_id, PDO::PARAM_INT);
-            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-            $stmt->execute();
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Konverzia na pole integerov pre istotu
+        $track_ids = array_map('intval', $track_ids);
 
-            if (!$row) {
-                continue; // Skip this track if not found
-            }
-            if ($mapmatched === 1){
+        // Priprav placeholders pre IN (...) časť
+        $placeholders = implode(',', array_fill(0, count($track_ids), '?'));
+
+        $sql = "SELECT * FROM files WHERE track_id IN ($placeholders) AND user_id = ?";
+        $stmt = $db->prepare($sql);
+
+        // Spojenie všetkých track_ids a user_id do jedného poľa
+        $params = array_merge($track_ids, [$user_id]);
+        $stmt->execute($params);
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($rows as $row) {
+            if ($mapmatched === 1) {
                 $file_path = str_replace("uploads", "mapmatched", $row['path']);
-            } else{
+            } else {
                 $file_path = $row['path'];
             }
+
             $zip->addFile($file_path, basename($row['path']));
         }
+
 
         // Close ZIP file
         $zip->close();

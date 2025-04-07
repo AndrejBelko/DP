@@ -9,7 +9,7 @@ import os
 
 ## Save map matched data to a csv file
 def create_file_for_db(data,track,user,type,name):
-    base_folder = f"/home/data/import/files/mapmatched/{user}" # folder in which users routes will be stored
+    base_folder = f"/home/data/import/files/mapmatched/{user}"
 
     if not os.path.isdir(base_folder):
         os.makedirs(base_folder)
@@ -49,7 +49,6 @@ def decode_polyline(polyline):
             if b < 0x1F:
                 break
         lng += ~(result >> 1) if (result & 1) != 0 else (result >> 1)
-        # Valhala uses 6 point precision instead of 5
         points.append([round(lng * 1e-6, 6), round(lat * 1e-6, 6)])
     return points
 
@@ -76,38 +75,46 @@ def map_match(points,container_name,parameters,costing):
     except:
         return "Error;Request did not succeed.", json.loads(r.text)
 
+## Iterative map match that skips unmatchable parts
+def split_and_map_match(points, container_name, parameters, costing, chunk_size=50, min_successful=3):
+    all_matched_points = []
+    i = 0
+    while i < len(points):
+        chunk = points[i:i + chunk_size]
+        status, geometry = map_match(chunk, container_name, parameters, costing)
+        if status.startswith("SUCESS"):
+            matched = decode_polyline(geometry)
+            all_matched_points.extend(matched)
+            i += chunk_size
+        else:
+            i += 1
+    return all_matched_points if len(all_matched_points) >= min_successful else None
+
 ## Remove any letters from lat/lon
 def clean_value(value):
     return re.sub(r'[^0-9.-]', '', value)
 
-## Get points from csv file, which must be in "lon,lat" structure
+## Get points from csv file
 def load_points(filename):
     with open(filename, 'r', newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
-        header = next(spamreader)  # Read the header row
+        header = next(spamreader)
         lat_index = None
         lon_index = None
-
-        # Find the indices of columns containing "lat" and "lon"
         for i, col in enumerate(header):
             if 'lat' in col.lower():
                 lat_index = i
             elif 'lon' in col.lower():
                 lon_index = i
-
-        # Check if both "lat" and "lon" columns are found
         if lat_index is None or lon_index is None:
             return None
-
         coords = []
         for row in spamreader:
             lat_value = clean_value(row[lat_index])
             lon_value = clean_value(row[lon_index])
             coords.append([float(lon_value), float(lat_value)])
-
         return coords
 
-## Get points from geojson file
 def load_points_from_geojson(file):
     f = open(file, "r")
     text = f.read()
@@ -122,7 +129,6 @@ def load_points_from_geojson(file):
 def load_gpx_points(file):
     points = []
     with open(file, 'r') as gpx_file:
-
         gpx = gpxpy.parse(gpx_file)
         for track in gpx.tracks:
             for segment in track.segments:
@@ -131,7 +137,6 @@ def load_gpx_points(file):
     return points
 
 def folder_process(params):
-
     container_name = params["container"]
     user = params["username"]
     file_input = params["file"].replace(r'\/', '/')
@@ -157,20 +162,20 @@ def folder_process(params):
     if points == None:
         failed[name] = f"Points couldn't be extracted."
 
-    ## MAPMATCH
     geometry = None
-    status = None
     subdir = parameters['type']
     if subdir == "Walk":
-        status, geometry = map_match(points,container_name,parameters,costing = "pedestrian", )
-    if subdir == "Drive":
-        status, geometry = map_match(points,container_name,parameters, costing = "auto")
-    if geometry != None:
-        pts = decode_polyline(geometry)
-        path = create_file_for_db(pts,name,user,subdir,"map-match.csv")
+        matched_pts = split_and_map_match(points, container_name, parameters, costing="pedestrian")
+    elif subdir == "Drive":
+        matched_pts = split_and_map_match(points, container_name, parameters, costing="auto")
+    else:
+        matched_pts = None
+
+    if matched_pts:
+        path = create_file_for_db(matched_pts, name, user, subdir, "map-match.csv")
         successful.append(name)
     else:
-        failed[name] = status.split(";")[1]
+        failed[name] = "No valid segments found for map matching."
 
     retDict["failed"] = len(failed)
     retDict["successful"] = len(successful)

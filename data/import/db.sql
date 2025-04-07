@@ -24,8 +24,6 @@ CREATE TABLE `hashcode`.`files` (
     `file_source` VARCHAR(64) NOT NULL,
      PRIMARY KEY (`id`));
 
-ALTER TABLE `hashcode`.`files` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
 DROP TABLE IF EXISTS `hashcode`.`path`;
 CREATE TABLE `hashcode`.`path` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -38,7 +36,6 @@ CREATE TABLE `hashcode`.`path` (
   `length` FLOAT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-ALTER TABLE `hashcode`.`path` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 DROP TABLE IF EXISTS `hashcode`.`tracks`;
 CREATE TABLE `hashcode`.`tracks` (
@@ -53,6 +50,9 @@ CREATE TABLE `hashcode`.`tracks` (
   `length` FLOAT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+ALTER TABLE `hashcode`.`files` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `hashcode`.`path` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE `hashcode`.`tracks` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- SET GLOBAL local_infile=1;

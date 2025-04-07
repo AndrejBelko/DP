@@ -93,14 +93,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         }
                     }
 
-                    // Insert file information into the database
-                    $sql = "SELECT id FROM users WHERE username = :username";
-                    $stmt = $db->prepare($sql);
-                    $stmt->bindParam(":username", $_SESSION["username"], PDO::PARAM_STR);
-                    $stmt->execute();
-                    $row = $stmt->fetch();
-                    $pouzivatel_id = $row["id"];
+                    $hasRequiredColumns = false;
 
+                    if (($handle = fopen($csv_file, "r")) !== false) {
+                        if (($header = fgetcsv($handle)) !== false) {
+                            // Normalizuj hlavičku
+                            $normalizedHeader = array_map(function($col) {
+                                return strtolower(trim($col));
+                            }, $header);
+
+                            // Definuj substringy pre každý typ stĺpca
+                            $timeSubstrings = ['date', 'time', 'timestamp', 'datetime'];
+                            $latSubstrings = ['latitude', 'lat'];
+                            $lonSubstrings = ['longitude', 'lon', 'long'];
+
+                            // Funkcia na zistenie, či niektorý stĺpec obsahuje aspoň jeden zo substringov
+                            $containsSubstring = function($headerCols, $substrings) {
+                                foreach ($headerCols as $col) {
+                                    foreach ($substrings as $substr) {
+                                        if (strpos($col, $substr) !== false) {
+                                            return true;
+                                        }
+                                    }
+                                }
+                                return false;
+                            };
+
+                            // Skontroluj, či sa požadované stĺpce nachádzajú
+                            $hasTime = $containsSubstring($normalizedHeader, $timeSubstrings);
+                            $hasLat = $containsSubstring($normalizedHeader, $latSubstrings);
+                            $hasLon = $containsSubstring($normalizedHeader, $lonSubstrings);
+
+                            $hasRequiredColumns = $hasTime && $hasLat && $hasLon;
+                        }
+
+                        fclose($handle);
+
+                        if (!$hasRequiredColumns) {
+                            $infomsg .= "Failed to process file (missing columns): " . $csv_name . "\n";
+                            continue;
+                        }
+                    }
+
+                    $pouzivatel_id = $_SESSION['user_id'];
+                    $username = $_SESSION['username'];
+                    $type = isset($_POST['trajectoryType']) ? 'Drive' : 'Walk';
+                    
                     $sql = "SELECT max(track_id) as 'track_id' FROM path WHERE user_id = :user_id";
                     $stmt = $db->prepare($sql);
                     $stmt->bindParam(":user_id", $pouzivatel_id, PDO::PARAM_STR);
@@ -118,17 +156,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                     $stmt->execute();
 
-                    $username = $_SESSION['username'];
-                    $type = isset($_POST['trajectoryType']) ? 'Drive' : 'Walk';
-
                     $command = escapeshellcmd("python3 /var/www/html/track_to_database.py $filename $csv_file $username $pouzivatel_id 0 $type $track_id" . " dataset");
                     $output = shell_exec($command . " 2>&1");
-                    echo $output;
+                    //echo $output;
 
                     $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
 
                     $output = shell_exec($command . " 2>&1");
-                    echo $output;
+                    //echo $output;
 
 //                $gpsAccuracy = $_POST['gps_accuracy'];
 //                $searchRadius = $_POST['search_radius'];
@@ -165,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                     // Execute the Python script
                     $output = shell_exec($pythonScript . " 2>&1");
-                    echo $output;
+                    //echo $output;
 
                     $command = escapeshellcmd("python3 /var/www/html/interpolate.py $csv_file");
                     $output = shell_exec($command . " 2>&1");
@@ -202,131 +237,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (!empty($track_ids)) {
             if ($action === "download_orig") {
                 $queryString = http_build_query(['track_ids' => $track_ids]);
-                header("Location: download.php?mapmatched=0&$queryString&user_id=$_SESSION[user_id]");
+                header("Location: download.php?mapmatched=0&$queryString");
             } elseif ($action === "download_mm") {
                 $queryString = http_build_query(['track_ids' => $track_ids]);
-                header("Location: download.php?mapmatched=1&$queryString&user_id=$_SESSION[user_id]");
+                header("Location: download.php?mapmatched=1&$queryString");
             } elseif ($action === "delete") {
                 // Convert array to query string
                 $queryString = http_build_query(['track_ids' => $track_ids]);
-                header("Location: delete.php?$queryString&user_id=$_SESSION[user_id]");
+                header("Location: delete.php?$queryString");
             }
         } else {
             $infomsg = "No file selected or an error occurred.";
-        }
-
-    } elseif(isset($_POST['form_action'])){
-
-        $sql = "SELECT id FROM users WHERE username = :username";
-        $stmt = $db->prepare($sql);
-        $stmt->bindParam(":username", $_SESSION["username"], PDO::PARAM_STR);
-        $stmt->execute();
-        $row = $stmt->fetch();
-        $pouzivatel_id = $row["id"];
-
-        $sql = "DELETE FROM path WHERE user_id = :user_id";
-        $stmt = $db->prepare($sql);
-        $stmt->bindParam(":user_id", $pouzivatel_id, PDO::PARAM_STR);
-        $stmt->execute();
-
-        $sql = "DELETE FROM tracks WHERE user_id = :user_id";
-        $stmt = $db->prepare($sql);
-        $stmt->bindParam(":user_id", $pouzivatel_id, PDO::PARAM_STR);
-        $stmt->execute();
-
-        $sql = "SELECT path, file_source FROM files WHERE user_id = :user_id";
-        $stmt = $db->prepare($sql);
-        $stmt->bindParam(":user_id", $pouzivatel_id, PDO::PARAM_STR);
-        $stmt->execute();
-        $row = $stmt->fetchAll();
-
-        for ($x = 0; $x < sizeof($row); $x++) {
-            $path = $row[$x]["path"];
-            $filename = basename($path);
-
-            // Create CSV file name by replacing .gpx with .csv
-            $csv_name = pathinfo($filename, PATHINFO_FILENAME) . '.csv';
-            $csv_file = $path;  // Set the CSV output path with same name
-            $file_source = $row[$x]["file_souce"];
-
-
-            // Check if the CSV file was generated
-            if (file_exists($csv_file)) {
-
-                $rowCount = 0;
-                if (($handle = fopen($csv_file, "r")) !== false) {
-                    while (($data = fgetcsv($handle)) !== false) {
-                        $rowCount++;
-                        if ($rowCount > 2) { // Stop early if we have more than 2 rows
-                            break;
-                        }
-                    }
-                    if ($rowCount === 2) {
-                        fclose($handle);
-                        $infomsg .= "Failed to process file: " . $csv_name . "\n";
-                        continue;
-                    }
-                }
-
-                $sql = "SELECT max(track_id) as 'track_id' FROM path WHERE user_id = :user_id";
-                $stmt = $db->prepare($sql);
-                $stmt->bindParam(":user_id", $pouzivatel_id, PDO::PARAM_STR);
-                $stmt->execute();
-                $row_track = $stmt->fetch();
-                $track_id = strval($row_track["track_id"] + 1);
-
-                $username = $_SESSION['username'];
-                $type = isset($_POST['trajectoryType']) ? 'Drive' : 'Walk';
-
-                $command = escapeshellcmd("python3 /var/www/html/track_to_database.py $filename $csv_file $username $pouzivatel_id 0 $type $track_id" . " dataset");
-                $output = shell_exec($command . " 2>&1");
-                // echo $output;
-                $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
-                $output = shell_exec($command . " 2>&1");
-                // echo $output;
-
-//                $gpsAccuracy = $_POST['gps_accuracy'];
-//                $searchRadius = $_POST['search_radius'];
-//                $turnPenalty = $_POST['turn_penalty_factor'];
-//                $walk = $_POST['type'];
-
-                // Define parameters
-                $params = [
-                    'type' => $type,
-                    'gps_accuracy' => "5", // Ensure $gpsAccuracy is defined
-                    'search_radius' => "50", // Ensure $searchRadius is defined
-                    'turn_penalty_factor' => "300" // Ensure $turnPenalty is defined
-                ];
-
-                // Convert the parameters array to JSON
-                $parametersJson = json_encode($params, JSON_PRETTY_PRINT);
-
-                // Define the input array for the Python script
-                $input = [
-                    'container' => $valhalla_container, // Container name
-                    'username' => $username, // Ensure $username is defined
-                    'parameters' => json_decode($parametersJson, true), // Decode back to array
-                    'file' => $path, // Ensure $gpx_file is defined
-                    'filename' => $filename,
-                    'user_id' => $pouzivatel_id,
-                    'track_id' => $track_id
-                ];
-
-                // Convert the input array to JSON
-                $jsonInput = json_encode($input, JSON_PRETTY_PRINT);
-
-                // Define the Python script command
-                $pythonScript = "python3 /var/www/html/mapmatch.py '$jsonInput'";
-                $output = shell_exec($pythonScript . " 2>&1");
-                //echo $output;
-
-                $command = escapeshellcmd("python3 /var/www/html/interpolate.py $csv_file");
-                $output = shell_exec($command . " 2>&1");
-                // echo $output;
-
-            } else {
-                $infomsg = "Error: CSV file not generated.";
-            }
         }
 
     }else {
@@ -451,27 +372,14 @@ unset($db);
                         </a>
                     </li>
                     <li class="nav-item">
-                        <div class="nav-link fs-5">
+                        <a class="nav-link fs-5" href="">
                             Welcome, <?php echo $_SESSION['username'] ?>
-                        </div>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <div class="nav-link fs-5" id="token" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                        <a class="nav-link fs-5" id="token" data-bs-toggle="modal" data-bs-target="#exampleModal" href="">
                             Security token
-                        </div>
-                    </li>
-                    <li>
-                        <div class="modal-body">
-                            <form action="profile.php" method="POST" id="formReloadDB1">
-                                <input type="hidden" name="form_action" value="form1">
-                                <!-- Add other form fields if needed -->
-                            </form>
-                        </div>
-
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary" form="formReloadDB1">Reload DB</button>
-                        </div>
-
+                        </a>
                     </li>
                 </ul>
             </div>
@@ -534,16 +442,16 @@ unset($db);
                                     }
                                     echo "<td>
                                     <div class='d-flex gap-2'>
-                                    <a href='delete.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
-                                    <a href='download.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."&mapmatched=0' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
+                                    <a href='delete.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
+                                    <a href='download.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) ."&mapmatched=0' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
                                     </div>
                                   </td>";
 
                                     if (isset($row[$i + 1])) {
                                         $next_row = $row[$i + 1];
                                         echo "<td>
-                                        <a href='delete.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
-                                        <a href='download.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "&user_id=". urlencode($_SESSION['user_id']) ."&mapmatched=1' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
+                                        <a href='delete.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
+                                        <a href='download.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) ."&mapmatched=1' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
                                       </td>";
                                     } else {
                                         echo "<td>—</td>"; // Placeholder if there is no `$i + 1`
@@ -564,6 +472,7 @@ unset($db);
 
     <div id="speedchart" class="chartdiv"></div>
     <div id="heightchart" class="chartdiv"></div>
+    <div id="hrchart" class="chartdiv"></div>
 </div>
 <!-- Toast Container -->
 <div class="toast-container p-3 top-0 start-50 translate-middle-x">
@@ -701,20 +610,19 @@ unset($db);
         errorToast.show();
     </script>
 <?php endif; ?>
-</div>
 
 <!-- Include Bootstrap JS (optional, for advanced interactions) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
-</html>
 <script>
+
     let table = new DataTable('#myTable', {
         paging: true,
         columnDefs: [
-            { orderable: false, targets: [0, 5, 6, 7, 8] } // Disable sorting on columns 1, 5, 6, 7, 8
+            { orderable: false, targets: [0, 5, 6, 7, 8] }
         ],
-        order: [[1, 'asc']], // Keep ordering on column 2 (index 1)
+        order: [[1, 'asc']],
         responsive: true,
         autoWidth: false
     });
@@ -779,14 +687,37 @@ unset($db);
         });
     }
 
-    function processData(jsonData) {
-        drawChart("speedchart", parseSpeed(jsonData), "Rychlost [km/h]", "speed", "Rychlost ", " km/h");
-        drawChart("heightchart", parseHeight(jsonData), "Vyska [m]", "height", "Vyska ", " m");
+    function parseHeartRate(data) {
+        return data.map(line => {
+            return {"time": parseInt(line[2]) * 1000, "hr": parseFloat(line[5])};
+        });
+    }
 
+    function processData(jsonData) {
+        const speedData = parseSpeed(jsonData).filter(d => !isNaN(d.speed));
+        const heightData = parseHeight(jsonData).filter(d => !isNaN(d.height));
+        const hrData = parseHeartRate(jsonData).filter(d => !isNaN(d.hr));
+
+        if (speedData.length > 0) {
+            drawChart("speedchart", speedData, "Rychlost [km/h]", "speed", "Rychlost ", " km/h");
+        } else{
+            document.getElementById("speedchart").style.display = "none";
+        }
+
+        if (heightData.length > 0) {
+            drawChart("heightchart", heightData, "Vyska [m]", "height", "Vyska ", " m");
+        } else{
+            document.getElementById("heightchart").style.display = "none";
+        }
+
+        if (hrData.length > 0) {
+            drawChart("hrchart", hrData, "HR [udery/min]", "hr", "Udery ", " udery/min");
+        } else{
+            document.getElementById("hrchart").style.display = "none";
+        }
     }
 
     function drawChart(idelement, data, name, field, prefix, suffix) {
-
         // Create chart instance
         const chart = am4core.create(idelement, am4charts.XYChart);
         chart.paddingRight = 20;

@@ -6,19 +6,16 @@ from shapely import geometry
 import sys
 
 def geohash_to_polygon(geohash):
-    """Convert a geohash to a Shapely polygon."""
     x = gh.bbox(geohash, True)
-    x.append(x[0])  # Close the polygon
+    x.append(x[0])
     return geometry.Polygon(x)
 
 
 def shapely_polygon_to_coordinates(polygon):
-    """Convert a Shapely polygon to GeoJSON coordinate format."""
-    return [(lat, lon) for lon, lat in polygon.exterior.coords]  # Flip order for GeoJSON
+    return [(lat, lon) for lon, lat in polygon.exterior.coords]
 
 
 def generate_geojson(geohash_list):
-    """Generate GeoJSON for individual geohash polygons."""
     features = []
     for gh_code in geohash_list:
         polygon = geohash_to_polygon(gh_code)

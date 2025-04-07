@@ -17,59 +17,47 @@ if (!isset($_SESSION["username"]) || $_SESSION["loggedin"] !== true) {
 
 $username1 = $_SESSION["username"];
 
-if (isset($_GET['user_id']) && isset($_GET['track_ids'])) {
+if (isset($_GET['track_ids'])) {
     try {
         $db = new PDO("mysql:host=$hostname;dbname=$dbname", $username, $password);
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         // Sanitize the 'route' parameter
-        $user_id = (int) htmlspecialchars($_GET['user_id']); // Cast to int for safety
-
-        if ($_SESSION['user_id'] != $user_id) {
-            header("Location: profile.php");
-            exit;
-        }
-
+        $user_id = $_SESSION['user_id']; // Cast to int for safety
         $track_ids = $_GET['track_ids']; // Get the array
 
         // Loop through the array
-        foreach ($track_ids as $track_id) {
+        // Konverzia track_id na int (pre bezpečnosť)
+        $track_ids = array_map('intval', $track_ids);
 
-            $track_id = (int) $track_id;
+        // Placeholder pre IN (...)
+        $placeholders = implode(',', array_fill(0, count($track_ids), '?'));
 
-            // Prepare and execute DELETE statements for the database
-            $sql = "DELETE FROM tracks WHERE track_id = :track_id and user_id = :user_id";
+        // DELETE z `tracks`, `path` a `files` tabuliek
+        $tables = ['tracks', 'path', 'files'];
+
+        foreach ($tables as $table) {
+            $sql = "DELETE FROM $table WHERE track_id IN ($placeholders) AND user_id = ?";
             $stmt = $db->prepare($sql);
-
-            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-            $stmt->bindParam(':track_id', $track_id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $sql = "DELETE FROM path WHERE track_id = :track_id and user_id = :user_id";
-            $stmt = $db->prepare($sql);
-
-            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-            $stmt->bindParam(':track_id', $track_id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $sql = "DELETE FROM files WHERE track_id = :track_id and user_id = :user_id";
-            $stmt = $db->prepare($sql);
-
-            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-            $stmt->bindParam(':track_id', $track_id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $filePath2 = '/home/data/import/files/db/' . $username1 . '/' . $username1 . '_path.csv';
-            deleteCSV($filePath2);
-            createCSV($filePath2, $db, $user_id);
-
-            if (file_exists($filePath2)){
-                $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username1);
-                exec($command, $output, $return_var);
-            } else{
-                unlink('/var/www/html/coverage/'.$username1.'.geojson');
-            }
+            $stmt->execute([...$track_ids, $user_id]);
         }
+
+        // CSV súbor (cesta a meno)
+        $filePath2 = '/home/data/import/files/db/' . $username1 . '/' . $username1 . '_path.csv';
+
+        // Zmazanie a vytvorenie CSV
+        deleteCSV($filePath2);
+        createCSV($filePath2, $db, $user_id);
+
+        // Spustenie Python skriptu alebo zmazanie GeoJSON
+        if (file_exists($filePath2)) {
+            $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username1);
+            exec($command, $output, $return_var);
+        } else {
+            unlink('/var/www/html/coverage/' . $username1 . '.geojson');
+            unlink('/var/www/html/center/' . $username1 . '.json');
+        }
+
     } catch (PDOException $e) {
         echo "Database error: " . $e->getMessage();
     } finally {

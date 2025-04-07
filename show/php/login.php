@@ -6,6 +6,9 @@ error_reporting(E_WARNING);
 require_once('config.php');
 session_start();
 
+$login_attempts_max = 3; // Maximálny pocet neuspesnych pokusov
+$lockout_time = 100; // časovy rozostup (10 sekúnd)
+
 try {
     $db = new PDO("mysql:host=$hostname;dbname=$dbname", $username, $password);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -24,25 +27,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $stmt->execute();
 
-    if ($stmt->rowCount() == 1) {
+    if (isset($_SESSION['username']) && $_SESSION['username'] != $_POST["username"]) {
+        $_SESSION['login_attempts'] = 0;
+    }
+
+    if (isset($_SESSION['login_attempts']) && $_SESSION['login_attempts'] >= $login_attempts_max) {
+        $time_since_last_attempt = time() - $_SESSION['last_login_attempt'];
+
+        if ($time_since_last_attempt < $lockout_time) {
+            $remaining_time = $lockout_time - $time_since_last_attempt;
+            $error_msg .= "Máte zablokovaný účet. Skúste to znovu za $remaining_time sekúnd.";
+        } else {
+            $_SESSION['login_attempts'] = 2;
+        }
+    } elseif ($stmt->rowCount() == 1) {
         $row = $stmt->fetch();
         $hashed_password = $row["password"];
         $user_id = $row["id"];
+        $_SESSION['username'] = $_POST["username"];
 
         if (password_verify($_POST["password"], $hashed_password)) {
             $row = $stmt->fetch();
             $_SESSION['loggedin'] = true;
-            $_SESSION['username'] = $_POST["username"];
             $_SESSION['user_id'] = $user_id;
             header("Location: ../index.php");
             exit;
         } else {
             $_SESSION['login_attempts']++;
             $_SESSION['last_login_attempt'] = time();
-            $error_msg .= "Nesprávny login alebo heslo.";
+            $error_msg .= "Nesprávne heslo.\n";
         }
     } else {
-        $error_msg .= "Nesprávny login alebo heslo.";
+        $error_msg .= "Nesprávny login alebo heslo.\n";
     }
 
     unset($stmt);
@@ -142,7 +158,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
             <div class="toast-body">
-                <?php echo $errmsg; ?>
+                <?php echo $error_msg; ?>
             </div>
         </div>
     </div>
@@ -150,7 +166,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <!-- Bootstrap JS (with Popper.js) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <?php if (!empty($errmsg)) : ?>
+    <?php if (!empty($error_msg)) : ?>
         <script>
             // Show the toast if $errmsg is not empty
             const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
