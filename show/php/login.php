@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         if ($time_since_last_attempt < $lockout_time) {
             $remaining_time = $lockout_time - $time_since_last_attempt;
-            $error_msg .= "Máte zablokovaný účet. Skúste to znovu za $remaining_time sekúnd.";
+            $error_msg .= "Your account is temporarily blocked. Try again in $remaining_time seconds.";
         } else {
             $_SESSION['login_attempts'] = 2;
         }
@@ -55,10 +55,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             $_SESSION['login_attempts']++;
             $_SESSION['last_login_attempt'] = time();
-            $error_msg .= "Nesprávne heslo.\n";
+            $error_msg .= "Wrong password.\n";
         }
     } else {
-        $error_msg .= "Nesprávny login alebo heslo.\n";
+        $error_msg .= "Username does not exist.\n";
     }
 
     unset($stmt);

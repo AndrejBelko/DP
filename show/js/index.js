@@ -390,9 +390,10 @@ function drawTrackScaledWithoutZoom(coordinates, svgWidth, svgHeight, i) {
     // Calculate the points for the SVG polyline by scaling the polyline coordinates.
     const scaledPoints = coordinates.map(coord => {
         const x = (coord[0] - minX) * scale + 5;
-        const y = (coord[1] - minY) * scale + 5;
+        const y = (maxY - coord[1]) * scale + 5;  // <-- zrkadlenie Y-ovej osi
         return `${x},${y}`;
     }).join(' ');
+
 
     // Create an SVG element and set its dimensions.
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -620,13 +621,17 @@ function findPaths() {
     if (interpolated.length < 2) {
         return;
     }
+    const params = new URLSearchParams(window.location.search);
+    const dataset = params.get("db");
     console.log(interpolated)
+    console.log(dataset)
     $.ajax({
         method: "POST",
         url: "php/geohash_py.php",
         dataType: "json",
         data: {
             "dbName": "hashcode",
+            "dataset": dataset,
             "type": mapmatched,
             "pattern": interpolated,
             "match": $("#gsMatch").val(),

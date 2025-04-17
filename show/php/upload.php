@@ -7,14 +7,17 @@ error_reporting(E_ALL);
 require_once('config.php');
 session_start();
 
-try {
-    $db = new PDO("mysql:host=$hostname;dbname=$dbname", $username, $password);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    echo $e->getMessage();
-}
+$headers = getallheaders();
+var_dump($headers);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    try {
+        $db = new PDO("mysql:host=$hostname;dbname=$dbname", $username, $password);
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    } catch (PDOException $e) {
+        echo $e->getMessage();
+    }
+
     try {
 
         $headers = getallheaders();
@@ -25,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         if ($apikey!="mvx0dtrEknr53uEozm1Czf8oCvnxyIPpkB1Up2p6PK"){
-            throw new Exception("Api invalid",401);
+            throw new Exception("Api key invalid",401);
         }
 
         $folder = isset($headers["x-folder"]) ? $headers["x-folder"] : "";
@@ -163,5 +166,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         echo json_encode(array("status" => $exception->getMessage()));
     }
 }
-
 ?>

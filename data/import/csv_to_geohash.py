@@ -87,82 +87,101 @@ def getTrackId(user_id):
 
 def csvToGeohash(csvPath, dbName, title, directory_path):
     user_id = insertUser(dbName)
-    track_id = getTrackId(user_id)
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print("reading dataset ...")
-    df = pd.read_csv(csvPath)
-    df = df.fillna('')
-    df = df[df['uid'] == 0] #doplnene
-    print("loaded dataset of "+str(len(df))+ " lines")
-    df.rename(columns={'tid': 'track','lng': 'longitude','lat': 'latitude'}, inplace=True)
-    #path.csv
-    lat_col = df.columns.get_loc("latitude")
-    lon_col = df.columns.get_loc("longitude")
-    track_col = df.columns.get_loc("track")
-    geohash = []
-    dx1 = pd.DataFrame(geohash, columns=["user_id", "geohash", "track_id", "mapmatched", "type", "timestamp", "length"])
-    if not os.path.isdir(directory_path):
-            os.makedirs(directory_path)
-    dx1.to_csv(f"{directory_path}/{dbName}_path.csv", sep=';', index=False, mode="w")
-    row = 0
-    total = 0
-    print(track_col)
-    print("Encoding tracks to geohash sequences into path.csv... ")
-    grouped = df.groupby('track')
-    for track_id, values in grouped:
-        # Extract latitudes and longitudes for the track
-        latitudes = values['latitude'].to_numpy()
-        longitudes = values['longitude'].to_numpy()
+    df_orig = pd.read_csv(csvPath)
+    df_orig = df_orig.fillna('')
+    df_orig.rename(columns={'tid': 'track','lng': 'longitude','lat': 'latitude'}, inplace=True)
+    uid_list = df_orig['uid'].unique()
+    print(uid_list)
+    for act_uid in [0,1]:
+        print(act_uid)
+        df = df_orig[df_orig['uid'] == act_uid] #doplnene
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print("reading dataset ...")
+        print("loaded dataset of "+str(len(df))+ " lines")
+        #path.csv
+        lat_col = df.columns.get_loc("latitude")
+        lon_col = df.columns.get_loc("longitude")
+        track_col = df.columns.get_loc("track")
+        geohash = []
+        try:
+            dx1 = pd.read_csv(f"{directory_path}/{dbName}_path.csv", sep=';')
+            track_id = dx1['track_id'].max() + 1
+        except FileNotFoundError:
+            dx1 = pd.DataFrame(geohash, columns=["user_id","geohash", "track_id", "mapmatched", "type", "timestamp", "length"])
+            dx1['track_id'] = dx1['track_id'].astype(int)  # Explicitly cast to int
+            track_id = 0
+            if not os.path.isdir(directory_path):
+                os.makedirs(directory_path)
+            dx1.to_csv(f"{directory_path}/{dbName}_path.csv", index=False, mode="w", sep=';', quoting=csv.QUOTE_NONE)
 
-        # Calculate trajectory length
-        trajectory_length = haversine_vectorized(latitudes, longitudes)
+        row = 0
+        total = 0
+        print(track_col)
+        print("Encoding tracks to geohash sequences into path.csv... ")
+        grouped = df.groupby('track')
+        for track_id_tmp, values in grouped:
+            # Extract latitudes and longitudes for the track
+            latitudes = values['latitude'].to_numpy()
+            longitudes = values['longitude'].to_numpy()
 
-        # Add rows for each point in the track
-        for _, row_data in values.iterrows():
-            geohash.append([
-                user_id,
-                gh.encode(row_data['latitude'], row_data['longitude'], precision=7),  # Generate geohash
-                track_id,  # Track ID
-                0,  # Mapmatched flag (placeholder)
-                "Drive",
-                timestamp,  # Current timestamp
-                trajectory_length  # Total track length
-            ])
-            row += 1
+            # Calculate trajectory length
+            trajectory_length = haversine_vectorized(latitudes, longitudes)
 
-        # Write to file in batches
-        if row > 1000000:
-            dx1 = pd.DataFrame(geohash, columns=["user_id", "geohash", "track_id", "mapmatched", "type", "timestamp", "length"])
-            dx1.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, sep=';', index=False, mode="a")
-            row = 0
-            geohash = []
-            total += 1
+            # Add rows for each point in the track
+            for _, row_data in values.iterrows():
+                geohash.append([
+                    user_id,
+                    gh.encode(row_data['latitude'], row_data['longitude'], precision=7),  # Generate geohash
+                    track_id + track_id_tmp,  # Track ID
+                    0,  # Mapmatched flag (placeholder)
+                    "Drive",
+                    timestamp,  # Current timestamp
+                    trajectory_length  # Total track length
+                ])
+                row += 1
 
-    dx1 = pd.DataFrame(geohash, columns=["user_id", "geohash", "track_id", "mapmatched", "type","timestamp", "length"])
-    dx1.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, sep=';', index=False, mode="a")
+            # Write to file in batches
+            if row > 1000000:
+                dx1 = pd.DataFrame(geohash, columns=["user_id", "geohash", "track_id", "mapmatched", "type", "timestamp", "length"])
+                dx1.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, sep=';', index=False, mode="a")
+                row = 0
+                geohash = []
+                total += 1
 
-    #track.csv
-    tracks = []
-    dx2 = pd.DataFrame(tracks, columns=['user_id', 'track_id', 'filename', 'track', 'mapmatched', "type",  "timestamp", "length"])
-    dx2.to_csv(f"{directory_path}/{dbName}_track.csv", index=False, sep=';', quoting=csv.QUOTE_NONE, mode="w")
-    row = 0
-    total = 0
-    grouped = df.groupby('track')
-    print("Generating geojsons for "+str(len(grouped))+" tracks into track.csv ...")
-    for id, values in grouped:
-        trajectory_length = haversine_vectorized(np.array(values['latitude']), np.array(values['longitude']))
-        tracks.append([user_id, track_id, dbName, str(geojson.Feature(geometry=geojson.LineString(values[["longitude", "latitude"]].values.tolist()))), 0, "Drive", timestamp, trajectory_length])
-        row+=1
-        if row>10000:
-            dx2 = pd.DataFrame(tracks, columns=['user_id', 'track_id', 'filename', 'track', 'mapmatched', "type",  "timestamp", "length"])
-            dx2.to_csv(f"{directory_path}/{dbName}_track.csv", header=False, index=False, sep=';', quoting=csv.QUOTE_NONE, mode="a")
-            row = 0
-            tracks = []
-            total +=1
-            print(str(total*10)+"k tracks done...")
+        dx1 = pd.DataFrame(geohash, columns=["user_id", "geohash", "track_id", "mapmatched", "type","timestamp", "length"])
+        dx1.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, sep=';', index=False, mode="a")
 
-    dx2 = pd.DataFrame(tracks, columns=['user_id', 'track_id', 'filename', 'track', 'mapmatched', "type",  "timestamp", "length"])
-    dx2.to_csv(f"{directory_path}/{dbName}_track.csv", header=False, index=False, sep=';', quoting=csv.QUOTE_NONE, mode="a")
+        #track.csv
+        try:
+            dx2 = pd.read_csv(f"{directory_path}/{dbName}_tracks.csv", sep=';')
+            track_id = dx2['track_id'].max() + 1
+        except FileNotFoundError:
+            dx2 = pd.DataFrame([], columns=['user_id', 'track_id', 'filename', 'track', 'mapmatched', "type",  "timestamp", "length"])
+            dx2['track_id'] = dx2['track_id'].astype(int)  # Explicitly cast to int
+            track_id = 0
+            if not os.path.isdir(directory_path):
+                os.makedirs(directory_path)
+            dx2.to_csv(f"{directory_path}/{dbName}_tracks.csv", index=False, mode="w", sep=';', quoting=csv.QUOTE_NONE)
+
+        tracks = []
+        row = 0
+        total = 0
+        grouped = df.groupby('track')
+        print("Generating geojsons for "+str(len(grouped))+" tracks into track.csv ...")
+        for id, values in grouped:
+            trajectory_length = haversine_vectorized(np.array(values['latitude']), np.array(values['longitude']))
+            tracks.append([user_id, track_id, dbName, str(geojson.Feature(geometry=geojson.LineString(values[["longitude", "latitude"]].values.tolist()))), 0, "Drive", timestamp, trajectory_length])
+            row+=1
+            track_id += 1
+            if row>10000:
+                dx2 = pd.DataFrame(tracks, columns=['user_id', 'track_id', 'filename', 'track', 'mapmatched', "type",  "timestamp", "length"])
+                row = 0
+                tracks = []
+                total +=1
+                print(str(total*10)+"k tracks done...")
+
+        dx2 = pd.DataFrame(tracks, columns=['user_id', 'track_id', 'filename', 'track', 'mapmatched', "type",  "timestamp", "length"])
+        dx2.to_csv(f"{directory_path}/{dbName}_tracks.csv", header=False, sep=';', index=False, mode="a")
 
     print("Generating db info...")
     #latlon_median.csv
@@ -215,6 +234,8 @@ if __name__ == '__main__':
         title = sys.argv[2] if len(sys.argv)==3 else sys.argv[3]
         directory_path = f"/home/data/import/files/db/{sys.argv[2]}"
         dx1, dx2 = csvToGeohash(sys.argv[1], sys.argv[2], title, directory_path)
+        dx1 = pd.read_csv(f"{directory_path}/{sys.argv[2]}_path.csv", sep=';')
+        dx2 = pd.read_csv(f"{directory_path}/{sys.argv[2]}_tracks.csv", sep=';')
         importData(dx1, dx2, sys.argv[2], directory_path)
         print("Finished")
         subprocess.run(["python3", "/var/www/html/geohash_area.py", sys.argv[2]])

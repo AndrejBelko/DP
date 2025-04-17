@@ -32,6 +32,10 @@ RUN pip3 install IPython
 RUN pip3 install scipy
 RUN apt -y install php-zip
 RUN npm install
+RUN sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 20M/g' /etc/php/7.4/apache2/php.ini
+RUN sed -i 's/post_max_size = 8M/post_max_size = 100M/g' /etc/php/7.4/apache2/php.ini
+RUN sed -i 's/max_execution_time = 30/max_execution_time = 120/g' /etc/php/7.4/apache2/php.ini
+
 
 # create db, mapmatched, uploads dirs in data/import/files
 

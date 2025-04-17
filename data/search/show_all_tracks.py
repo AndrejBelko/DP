@@ -19,7 +19,6 @@ def runQuery(type, user_id):
     routes = pd.DataFrame(mycursor.fetchall(), columns=['id', 'route','mapmatched', 'type', 'timestamp','length'])
     mycursor.close()
     mydb.disconnect()
-
     return routes
 
 if __name__ == '__main__':
