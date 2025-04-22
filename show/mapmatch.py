@@ -6,6 +6,7 @@ import base64
 import subprocess
 import re
 import os
+import config
 
 ## Save map matched data to a csv file
 def create_file_for_db(data,track,user,type,name):
@@ -64,16 +65,16 @@ def map_match(points,container_name,parameters,costing):
     meili_tail = '], "shape_match":"map_snap", "costing": "' + costing + '", "costing_options":{"pedestrian":{"ignore_access":true} }, "format":"osrm", "trace_options":{"search_radius": ' + \
                  parameters['search_radius'] + ', "turn_penalty_factor": ' + parameters['turn_penalty_factor'] + ', "gps_accuracy": ' + parameters['gps_accuracy'] + '}}'
     meili_request_body = meili_head + meili_coordinates + meili_tail
-    port = 8002
+    port = config.VALHALLA_PORT
     url = f"http://{container_name}:{port}/trace_route"
     headers = {'Content-type': 'application/json'}
     data = str(meili_request_body)
     try:
-        r = requests.post(url, data=data, headers=headers)
+        r = requests.post(url, data=data, headers=headers, timeout=10)
         response_text = json.loads(r.text)
         return "SUCESS;", response_text['matchings'][0]['geometry']
-    except:
-        return "Error;Request did not succeed.", json.loads(r.text)
+    except Exception as e:
+        return "Error;Request did not succeed.", {}
 
 ## Iterative map match that skips unmatchable parts
 def split_and_map_match(points, container_name, parameters, costing, chunk_size=50, min_successful=3):
@@ -171,6 +172,7 @@ def folder_process(params):
     else:
         matched_pts = None
 
+    path = "None"
     if matched_pts:
         path = create_file_for_db(matched_pts, name, user, subdir, "map-match.csv")
         successful.append(name)
@@ -184,6 +186,26 @@ def folder_process(params):
     print(json.dumps(retDict))
     return path
 
+def check_valhalla_connection(container_name, port=config.VALHALLA_PORT):
+    url = f"http://{container_name}:{port}/status"
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            return True
+        else:
+            return False
+    except requests.exceptions.RequestException as e:
+        print(f"Connection to Valhalla failed: {e}")
+        return False
+
 params = json.loads(sys.argv[1])
-path = folder_process(params)
-subprocess.run(["python3", "/var/www/html/track_to_database.py", params['filename'], path, params['username'], params['user_id'], '1', params['parameters']['type'], params['track_id']])
+if check_valhalla_connection(params["container"]):
+    path = folder_process(params)
+    if path == "None":
+        sys.exit(1)
+    else:
+        subprocess.run(["python3", "/var/www/html/track_to_database.py", params['filename'], path, params['username'], params['user_id'], '1', params['parameters']['type'], params['track_id']])
+        sys.exit(0)
+else:
+    sys.exit(1)
+

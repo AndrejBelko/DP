@@ -15,10 +15,6 @@ mapmatched_df = pd.read_csv(mm_file_path)  # Columns: ['lat', 'lon']
 lat_columns = [col for col in original_df.columns if "lat" in col.lower()]
 lon_columns = [col for col in original_df.columns if "lon" in col.lower()]
 
-# Ensure mapmatched data is smaller or equal in size to original
-if len(mapmatched_df) > len(original_df):
-    raise ValueError("Mapmatched trajectory has more points than the original, which is unexpected.")
-
 # Create a virtual index for both datasets (since no timestamps in mapmatched data)
 original_df["index"] = np.linspace(0, 1, len(original_df))  # Normalize original index
 mapmatched_df["index"] = np.linspace(0, 1, len(mapmatched_df))  # Normalize mapmatched index

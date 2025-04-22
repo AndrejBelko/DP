@@ -1,6 +1,20 @@
 <?php
-
 #ngrok.com presmerovanie localhostu
+
+function logErrorOutput($filename, $output): void {
+
+    $logFile = 'errors.log';
+    if (!file_exists($logFile)) {
+        touch($logFile);
+        chmod($logFile, 0666);
+    }
+    $timestamp = date('Y-m-d H:i:s');
+    $message = "[$timestamp] Error while processing $filename\n";
+    $message .= implode("\n", $output) . "\n\n";
+
+    file_put_contents($logFile, $message, FILE_APPEND);
+}
+
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -31,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $uploads_dir = '/home/data/import/files/uploads/' . $_SESSION["username"] . "/";
         $input_files = $_FILES['files'] ?? $_FILES['trexfiles'];
 
+        $errors = $input_files['error'] ?? [];
         $tmp_names = $input_files['tmp_name'];
         $names = array_map(function ($name) {
             return strtolower(basename($name));
@@ -157,18 +172,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $stmt->execute();
 
                     $command = escapeshellcmd("python3 /var/www/html/track_to_database.py $filename $csv_file $username $pouzivatel_id 0 $type $track_id" . " dataset");
-                    $output = shell_exec($command . " 2>&1");
-                    //echo $output;
+                    exec($command . " 2>&1", $output, $return_var);
+                    if ($return_var !== 0) {
+                        $infomsg .= "Failed to process file $filename and load it into database.\n";
+                        logErrorOutput($filename, $output);
+                        continue;
+                    }
 
                     $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
-
-                    $output = shell_exec($command . " 2>&1");
-                    //echo $output;
-
-//                $gpsAccuracy = $_POST['gps_accuracy'];
-//                $searchRadius = $_POST['search_radius'];
-//                $turnPenalty = $_POST['turn_penalty_factor'];
-//                $walk = $_POST['type'];
+                    exec($command . " 2>&1", $output, $return_var);
+                    if ($return_var !== 0) {
+                        $infomsg .= "Failed to create geohash area for file $filename .\n";
+                        logErrorOutput($filename, $output);
+                        continue;
+                    }
 
                     // Define parameters
                     $params = [
@@ -198,13 +215,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     // Define the Python script command
                     $pythonScript = "python3 /var/www/html/mapmatch.py '$jsonInput'";
 
-                    // Execute the Python script
-                    $output = shell_exec($pythonScript . " 2>&1");
-                    //echo $output;
+                    exec($pythonScript . " 2>&1", $output, $return_var);
+                    if ($return_var !== 0) {
+                        $infomsg .= "Map matching failed for $filename \n";
+                        logErrorOutput($filename, $output);
+                        continue;
+                    }
 
                     $command = escapeshellcmd("python3 /var/www/html/interpolate.py $csv_file");
-                    $output = shell_exec($command . " 2>&1");
-                    // echo $output;
+                    exec($command . " 2>&1", $output, $return_var);
+                    if ($return_var !== 0) {
+                        $infomsg .= "Failed to interpolate file $filename .\n";
+                        logErrorOutput($filename, $output);
+                    }
 
                 } else {
                     $infomsg = "Error: CSV file not generated.";
@@ -257,10 +280,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 if (!$err) {
     $user_id = intval($_SESSION['user_id']);  // Get the user_id from the session
-    $sql = "SELECT t.*, f.file_source as file_source 
-        FROM tracks t 
-        JOIN files f ON t.user_id = f.user_id AND t.track_id = f.track_id
-        WHERE t.user_id = :user_id";
+    $sql = "SELECT t.*, f.file_source
+            FROM tracks t
+            JOIN files f ON t.user_id = f.user_id AND t.track_id = f.track_id
+            WHERE t.user_id = :user_id
+            ORDER BY t.track_id, t.mapmatched ASC";
 
     $stmt1 = $db->prepare($sql);
     $stmt1->bindParam(":user_id", $user_id, PDO::PARAM_INT);  // Use PARAM_INT for numeric values
@@ -425,7 +449,7 @@ unset($db);
                             <tbody>
                             <?php
                             if (!$err) {
-                                for ($i = 0; $i < count($row); $i += 2) {
+                                for ($i = 0; $i < count($row); $i += 0) {
                                     $row_tmp = $row[$i]; // Access every second element
                                     echo "<tr>";
                                     echo "<td><input class= 'checkbox' type='checkbox' name='track_ids[]' value='" . $row_tmp['track_id'] . "'></td>";
@@ -447,16 +471,16 @@ unset($db);
                                     </div>
                                   </td>";
 
-                                    if (isset($row[$i + 1])) {
-                                        $next_row = $row[$i + 1];
+                                    if (isset($row[$i + 1]) && $row[$i + 1]['track_id'] == $row_tmp['track_id'] && $row[$i + 1]['mapmatched'] == 1) {
+                                        $i += 2;
                                         echo "<td>
-                                        <a href='delete.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
-                                        <a href='download.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) ."&mapmatched=1' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
-                                      </td>";
+                                                <a href='delete.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) . "' class='btn btn-sm btn-danger'><i class='bi bi-trash'></i></a>
+                                                <a href='download.php?" . http_build_query(['track_ids' => [$row_tmp['track_id']]]) ."&mapmatched=1' class='btn btn-sm btn-info'><i class='bi bi-download'></i></a>
+                                              </td>";
                                     } else {
-                                        echo "<td>—</td>"; // Placeholder if there is no `$i + 1`
+                                        $i += 1;
+                                        echo "<td>—</td>";
                                     }
-
                                     echo "<td>
                                     <div class='btn btn-sm btn-info' onclick='loadGPSData(\"" . $row_tmp['filename'] . "\")'><i class='bi bi-info'></i></div>
                                   </td>";

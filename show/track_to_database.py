@@ -34,7 +34,6 @@ type = sys.argv[6]
 track_id = sys.argv[7]
 timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-print("Reading dataset...")
 geohash = []
 directory_path = f"/home/data/import/files/db/{dbName}"
 # Try to read the existing path CSV to get the max track ID, if not present create a new one
@@ -130,17 +129,9 @@ for track_id, values in grouped:
 dx1 = pd.DataFrame(geohash, columns=["user_id","geohash", "track_id", "mapmatched", "type", "timestamp", "length"])
 dx1.to_csv(f"{directory_path}/{dbName}_path.csv", header=False, index=False, mode="a", sep=';', quoting=csv.QUOTE_NONE)
 
-
 # --------------------- Track.csv Generation ---------------------
 
 tracks = []
-
-# Try to read the existing track CSV, if not present create a new one
-# try:
-#     dx = pd.read_csv(f"{directory_path}/{dbName}_track.csv", sep=';')
-# except FileNotFoundError:
-#     dx = pd.DataFrame(tracks, columns=['route', 'filename', 'track', "mapmatched", "type", "timestamp", "length"])
-#     dx.to_csv(f"{directory_path}/{dbName}_track.csv", index=False, mode="w", sep=';', quoting=csv.QUOTE_NONE)
 
 row = 0
 total = 0
@@ -164,25 +155,18 @@ if "LONGITUDE E/W" in df.columns:
     df['longitude'] = df['longitude'].str.slice(0, -1)
     df['longitude'] = df['longitude'].astype(float)
 
-print(f"Generating geojsons for {len(grouped)} tracks into {dbName}_track.csv...")
 for track_id, values in grouped:
     trajectory_length = haversine_vectorized(np.array(values['latitude']), np.array(values['longitude']))
     tracks.append([user_id, track_id, file_name, str(geojson.Feature(geometry=geojson.LineString(values[["longitude", "latitude"]].values.tolist()))), mapmatched, type, timestamp, trajectory_length])
     row += 1
     if row > 10000:
         dx2 = pd.DataFrame(tracks, columns=['user_id', 'track_id', 'filename', 'track', 'mapmatched', "type", 'timestamp', "length"])
-        #dx.to_csv(f"{directory_path}/{dbName}_track.csv", header=False, index=False, sep=';',
-        #          quoting=csv.QUOTE_NONE, mode="a")
         row = 0
         tracks = []
         total += 1
-        print(str(total * 10) + "k tracks done...")
 
 # Write the final batch of tracks
 dx2 = pd.DataFrame(tracks, columns=['user_id', 'track_id', 'filename', 'track', 'mapmatched', "type", 'timestamp', "length"])
-# dx.to_csv(f"{directory_path}/{dbName}_track.csv", header=False, index=False, sep=';', quoting=csv.QUOTE_NONE, mode="a")
-
-print("GeoJSON track generation complete.")
 
 # --------------------- Generating DB Info ---------------------
 
@@ -192,9 +176,6 @@ mapconfig = {"center":{"lat": df["latitude"].median(), "lon": df["longitude"].me
 with open(f"/var/www/html/center/{dbName}.json", 'w') as outfile:
     outfile.write(json.dumps(mapconfig))
 
-print(f"DB info written to {dbName}.json.")
-
-print("creating database...")
 # Connect to MySQL as 'search' user
 mydb = mysql.connector.connect(
     host="localhost",
@@ -204,7 +185,6 @@ mydb = mysql.connector.connect(
 mycursor = mydb.cursor()
 
 # Create the database if it doesn't exist
-# mycursor.execute(f"CREATE DATABASE IF NOT EXISTS `{dbName}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;")
 mycursor.close()
 mydb.close()
 
@@ -218,21 +198,6 @@ mydb = mysql.connector.connect(
 )
 mycursor = mydb.cursor()
 
-# Create 'path' table
-# mycursor.execute("DROP TABLE IF EXISTS `path`;")
-# mycursor.execute("""
-#     CREATE TABLE `path` (
-#         `id` int(11) NOT NULL AUTO_INCREMENT,
-#         `geohash` varchar(7) NOT NULL,
-#         `track` varchar(80) NOT NULL,
-#         `mapmatched` varchar(80) NOT NULL,
-#         `type` varchar(80) NOT NULL,
-#         `timestamp` TIMESTAMP NOT NULL,
-#         `length` FLOAT NOT NULL,
-#         PRIMARY KEY (`id`),
-#         KEY `ihash` (`geohash`)
-#     ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-# """)
 
 sql = """
 INSERT INTO path (user_id, geohash, track_id, mapmatched, type, timestamp, length)
@@ -257,46 +222,6 @@ data = list(dx2[['user_id', 'track_id', 'filename', 'track', 'mapmatched', 'type
 # Execute Batch Insert
 mycursor.executemany(sql, data)
 mydb.commit()
-
-# Create 'tracks' table
-# mycursor.execute("DROP TABLE IF EXISTS `tracks`;")
-# mycursor.execute("""
-#     CREATE TABLE `tracks` (
-#         `route` int(11) NOT NULL,
-#         `filename` varchar(250) NOT NULL,
-#         `track` mediumtext NOT NULL,
-#         `mapmatched` varchar(80) NOT NULL,
-#         `type` varchar(80) NOT NULL,
-#         `timestamp` TIMESTAMP NOT NULL,
-#          `length` FLOAT NOT NULL,
-#         PRIMARY KEY (`route`)
-#     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-# """)
-#
-# # Enable local infile for the session
-# mycursor.execute("SET GLOBAL local_infile = 1;")
-#
-# # Import 'path.csv'
-# print("Importing tracks ...")
-# try:
-#     mycursor.execute(f"""
-#         LOAD DATA LOCAL INFILE '{directory_path}/{dbName}_path.csv'
-#         INTO TABLE `path`
-#         FIELDS TERMINATED BY ';' LINES TERMINATED BY '\n' IGNORE 1 LINES (`id`, `geohash`, `track`, `mapmatched`, `type` , `timestamp`, `length`);
-#     """)
-# except mysql.connector.Error as err:
-#     print(f"Error loading path data: {err}")
-#
-# # Import 'track.csv'
-# print("Importing geojsons ...")
-# try:
-#     mycursor.execute(f"""
-#         LOAD DATA LOCAL INFILE '{directory_path}/{dbName}_track.csv'
-#         INTO TABLE `tracks`
-#         FIELDS TERMINATED BY ';' LINES TERMINATED BY '\n' IGNORE 1 LINES (`route` ,`filename` ,`track`, `mapmatched`, `type` , `timestamp`, `length`);
-#     """)
-# except mysql.connector.Error as err:
-#     print(f"Error loading track data: {err}")
 
 # Commit and close
 mydb.commit()

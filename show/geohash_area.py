@@ -44,4 +44,4 @@ output_json_path = f"/var/www/html/coverage/{db_name}_components.json"
 with open(output_json_path, "w") as outfile:
     json.dump(geohash_list, outfile)
 
-print("GeoJSON and geohash list saved.")
+# print("GeoJSON and geohash list saved.")
