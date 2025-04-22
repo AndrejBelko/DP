@@ -410,7 +410,10 @@ function drawTrackScaledWithoutZoom(coordinates, svgWidth, svgHeight, i) {
     // Append the polyline element to the SVG element and the SVG element to the DOM.
     const divname = "mapArea" + i;
     svg.appendChild(polyline);
-    document.getElementById(divname).replaceChildren(svg);
+    const container = document.getElementById(divname);
+    if (container) {
+        container.replaceChildren(svg);
+    }
 }
 
 function showResults() {
@@ -500,10 +503,12 @@ function showResults() {
         const start = info.start;
         const end = info.end;
 
-        // Draw tracks for rows on the current page
-        for (let i = start; i < end; i++) {
-            drawTrackScaledWithoutZoom(JSON.parse(gdata[i][6]).geometry.coordinates, 80, 80, i);
-        }
+        setTimeout(() => {
+            for (let i = start; i < end; i++) {
+                const coords = JSON.parse(gdata[i][6]).geometry.coordinates;
+                drawTrackScaledWithoutZoom(coords, 80, 80, i);
+            }
+        }, 30); // Delay to ensure DOM is updated
     });
 
     // Trigger the draw event to draw tracks when the table is first initialized
@@ -834,7 +839,10 @@ function showResults1() {
         var dateObj = new Date(item[4]);
         var formattedDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}:${String(dateObj.getSeconds()).padStart(2, '0')}`;
 
-        var $tr = $('<tr class="result-item"></tr>').attr('id', item[0]);
+        const $tr = $('<tr class="result-item"></tr>')
+            .attr('id', item[0])
+            .attr('data-index', index); // Store the gdata index here
+
 
         var $td1 = $('<td></td>');
         var $div1 = $('<div id="mapArea' + index + '" style="width:150px;height:80px;"></div>').on('click', function () {
@@ -869,16 +877,17 @@ function showResults1() {
 
     // Draw tracks for the visible rows based on the current DataTable page
     table.on('draw', function () {
-        // Loop through only the visible rows on the current page
-        const info = table.page.info();  // Get DataTable pagination info
-        const start = info.start;        // Index of the first row on the current page
-        const end = info.end;            // Index of the last row on the current page
-
-        // Draw tracks for rows in the current page
-        for (let i = start; i < end; i++) {
-            drawTrackScaledWithoutZoom(JSON.parse(gdata[i][1]).geometry.coordinates, 80, 80, i);
-        }
+        setTimeout(() => {
+            table.rows({ page: 'current' }).nodes().to$().each(function () {
+                const gdataIndex = $(this).data('index'); // Correct gdata index
+                if (gdata[gdataIndex]) {
+                    const coords = JSON.parse(gdata[gdataIndex][1]).geometry.coordinates;
+                    drawTrackScaledWithoutZoom(coords, 80, 80, gdataIndex);
+                }
+            });
+        }, 30);
     });
+
 
     // Trigger the draw event to draw tracks when the table is first initialized
     table.draw();

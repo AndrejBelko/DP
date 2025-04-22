@@ -179,13 +179,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         continue;
                     }
 
-                    $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
-                    exec($command . " 2>&1", $output, $return_var);
-                    if ($return_var !== 0) {
-                        $infomsg .= "Failed to create geohash area for file $filename .\n";
-                        logErrorOutput($filename, $output);
-                        continue;
-                    }
+//                    $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
+//                    exec($command . " 2>&1", $output, $return_var);
+//                    if ($return_var !== 0) {
+//                        $infomsg .= "Failed to create geohash area for file $filename .\n";
+//                        logErrorOutput($filename, $output);
+//                        continue;
+//                    }
 
                     // Define parameters
                     $params = [
@@ -226,6 +226,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     exec($command . " 2>&1", $output, $return_var);
                     if ($return_var !== 0) {
                         $infomsg .= "Failed to interpolate file $filename .\n";
+                        logErrorOutput($filename, $output);
+                        continue;
+                    }
+
+                    $command = escapeshellcmd("python3 /var/www/html/geohash_area.py " . $username);
+                    exec($command . " 2>&1", $output, $return_var);
+                    if ($return_var !== 0) {
+                        $infomsg .= "Failed to create geohash area for file $filename .\n";
                         logErrorOutput($filename, $output);
                     }
 
