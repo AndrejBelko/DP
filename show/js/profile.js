@@ -70,19 +70,19 @@ function processData(jsonData) {
     const hrData = parseHeartRate(jsonData).filter(d => !isNaN(d.hr));
 
     if (speedData.length > 0) {
-        drawChart("speedchart", speedData, "Rychlost [km/h]", "speed", "Rychlost ", " km/h");
+        drawChart("speedchart", speedData, "Speed [km/h]", "speed", "Speed ", " km/h");
     } else{
         document.getElementById("speedchart").style.display = "none";
     }
 
     if (heightData.length > 0) {
-        drawChart("heightchart", heightData, "Vyska [m]", "height", "Vyska ", " m");
+        drawChart("heightchart", heightData, "Altitude [m]", "height", "Altitude ", " m");
     } else{
         document.getElementById("heightchart").style.display = "none";
     }
 
     if (hrData.length > 0) {
-        drawChart("hrchart", hrData, "HR [udery/min]", "hr", "Udery ", " udery/min");
+        drawChart("hrchart", hrData, "Heart rate [bpm]", "hr", "Bpm ", " bpm");
     } else{
         document.getElementById("hrchart").style.display = "none";
     }
