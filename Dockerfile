@@ -35,16 +35,20 @@ RUN npm install
 RUN sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 20M/g' /etc/php/7.4/apache2/php.ini
 RUN sed -i 's/post_max_size = 8M/post_max_size = 100M/g' /etc/php/7.4/apache2/php.ini
 RUN sed -i 's/max_execution_time = 30/max_execution_time = 120/g' /etc/php/7.4/apache2/php.ini
+RUN sed -i 's/max_file_uploads = 20/max_file_uploads = 100/g' /etc/php/7.4/apache2/php.ini
 
 
 # create db, mapmatched, uploads dirs in data/import/files
+
+# CREATE BRIDGE
+# docker network create web_server --driver bridge
 
 # BUILD IMAGE AND CREATE CONTAINER
 # docker run -dit --name valhalla --network web_server -p 8002:8002 -e tile_urls="https://download.geofabrik.de/europe/slovakia-latest.osm.pbf https://download.geofabrik.de/europe/czech-republic-latest.osm.pbf" ghcr.io/gis-ops/docker-valhalla/valhalla:latest
 
 # BUILD IMAGE AND CREATE CONTAINER
 # docker build -t search .
-# docker run -dit -v C:\Users\maros\Documents\dockeer\mcomputing\search_web\show:/var/www/html/ -v C:\Users\maros\Documents\dockeer\mcomputing\search_web\data:/home/data --name search_gps -p 8090:80 search 
+# docker run -dit -v C:\Users\maros\Documents\dockeer\mcomputing\search_web\show:/var/www/html/ -v C:\Users\maros\Documents\dockeer\mcomputing\search_web\data:/home/data --network web_server --name search_gps -p 8090:80 search
 
 # FIRST TIME
 #  docker container exec -it search_gps /bin/bash
@@ -52,13 +56,13 @@ RUN sed -i 's/max_execution_time = 30/max_execution_time = 120/g' /etc/php/7.4/a
 #  service mysql start
 #  mysql -u root < /home/data/import/db.sql
 
+# After another start of container
+#  docker container exec -it search_gps /bin/bash
+#  service apache2 start
+#  service mysql start
+
 # WHEN ADDING DATASET: place csv file with columns track,lat,lon 
 #  python3 /home/data/import/csv_to_geohash.py path.to.csv dbName "name of dataset"
 #
 #  EXAMPLE:
 #  python3 /home/data/import/csv_to_geohash.py /home/data/import/files/geolife.csv geolife "Geolife Dataset"
-
-# After another start of container
-#  docker container exec -it search_gps /bin/bash
-#  service apache2 start
-#  service mysql start
