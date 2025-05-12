@@ -1,3 +1,6 @@
+/**
+ * Main bar chart showing how many trajectories pass through each selected box.
+ */
 const chart = new CanvasJS.Chart("chartContainer", {
     theme: "light2", // "light1", "light2", "dark1", "dark2"
     animationEnabled: true,
@@ -28,6 +31,9 @@ const chart = new CanvasJS.Chart("chartContainer", {
     }]
 });
 
+/**
+ * Bar chart showing how many trajectories match a certain number of boxes.
+ */
 const chart2 = new CanvasJS.Chart("chart2Container", {
     theme: "light2", // "light1", "light2", "dark1", "dark2"
     animationEnabled: true,
@@ -135,6 +141,9 @@ graphButton = L.easyButton('fa-bar-chart', function () {
     bsOffcanvasRight.toggle();
 }).addTo(map);
 
+/**
+ * Handles sidebar toggle state and applies CSS changes to leaflet controls.
+ */
 function changeSideBar(){
     if (opened){
         document.querySelector('.leaflet-control-container').classList.remove('sidebar-open');
@@ -145,6 +154,10 @@ function changeSideBar(){
     }
 }
 
+/**
+ * Handles click on "box count" histogram.
+ * Highlights selected bar and shows only the matching trajectories.
+ */
 function showSelectedColumn(point) {
     let i;
     var gdataPrint = [];
@@ -222,6 +235,10 @@ function showSelectedColumn(point) {
     gdataPrintResult.addTo(map);
 }
 
+/**
+ * Handles click on "specific box" histogram.
+ * Shows trajectories that pass through the selected box.
+ */
 function showSelectedColumnPerPoint(point) {
     let i;
     var gdataPrint = [];
@@ -301,6 +318,9 @@ function showSelectedColumnPerPoint(point) {
     gdataPrintResultPerPoint.addTo(map);
 }
 
+/**
+ * Clears all current search results, visualizations and map overlays.
+ */
 function clearSearch() {
     bsOffcanvasRight.hide();
     for (var i in boxes) {
@@ -328,6 +348,10 @@ function clearSearch() {
     }
 }
 
+/**
+ * Adds a clicked point (latlng) on the map to the list of geohash boxes.
+ * Also updates the visual box on the map and UI inputs.
+ */
 function addToPath(latlng) {
     const hash = encodeGeoHash(latlng.lat, latlng.lng, 7);
     interpolated.push(hash);
@@ -347,6 +371,10 @@ function addToPath(latlng) {
     $("#gaps").val(Math.round(boxes.length * 0.2));
 }
 
+/**
+ * Handles toggle between raw and map-matched data.
+ * Triggers new search and display.
+ */
 const checkbox = document.getElementById('toggleSwitch');
 checkbox.addEventListener('change', function () {
     if (checkbox.checked) {
@@ -358,7 +386,10 @@ checkbox.addEventListener('change', function () {
     showAllPaths()
 });
 
-
+/**
+ * Called when the map is clicked.
+ * Adds the clicked point to search path and runs matching.
+ */
 function onMapClick(e) {
     addToPath(e.latlng);
     all_trajectories = false;
@@ -367,6 +398,14 @@ function onMapClick(e) {
 
 map.on('click', onMapClick);
 
+/**
+ * Draws a scaled, static SVG preview of a track inside a table cell.
+ *
+ * @param {Array} coordinates - List of [lon, lat] pairs
+ * @param {number} svgWidth - Width of the SVG canvas
+ * @param {number} svgHeight - Height of the SVG canvas
+ * @param {number} i - ID/index of the row (used as DOM id suffix)
+ */
 function drawTrackScaledWithoutZoom(coordinates, svgWidth, svgHeight, i) {
     // Find the minimum and maximum values for x and y coordinates.
     let minX = coordinates[0][0], maxX = coordinates[0][0];
@@ -416,6 +455,10 @@ function drawTrackScaledWithoutZoom(coordinates, svgWidth, svgHeight, i) {
     }
 }
 
+/**
+ * Displays matching search results (after filtered search)
+ * in DataTable + generates two charts.
+ */
 function showResults() {
     let i;
     $("#resultsbox").show();
@@ -577,7 +620,9 @@ function showResults() {
     isFirstToDisplay = 0;
 }
 
-
+/**
+ * Displays selected track on the map from filtered results.
+ */
 function showTrack(id) {
     if (geoAllResult != null) {
         map.removeLayer(geoAllResult);
@@ -613,6 +658,10 @@ function showAll() {
     geoAllResult.addTo(map);
 }
 
+
+/**
+ * Removes a box from the map and re-triggers search.
+ */
 function removeBox(id) {
     boxes[id].removeFrom(map);
     boxes.splice(id, 1);
@@ -622,6 +671,10 @@ function removeBox(id) {
     findPaths();
 }
 
+/**
+ * Sends AJAX request to backend with selected box pattern
+ * and displays matching trajectories and stats.
+ */
 function findPaths() {
     if (interpolated.length < 2) {
         return;
@@ -712,6 +765,9 @@ function findPaths() {
     all_trajectories = true;
 }
 
+/**
+ * Loads and displays all available trajectories for the selected dataset.
+ */
 function showAllPaths() {
     if (queryDB !== " ") {
         $.ajax({
@@ -807,6 +863,10 @@ if (queryDB !== " "){
 
 }
 
+/**
+ * Displays all available tracks (from full dataset),
+ * used with "Show All" functionality.
+ */
 function showResults1() {
     $("#resultsbox").show();
     $("#chartContainer").show();
@@ -898,7 +958,9 @@ function showResults1() {
     isFirstToDisplay = 0;
 }
 
-
+/**
+ * Displays selected track on the map from "Show All" mode.
+ */
 function showTrack1(id) {
     if (geoAllResult != null) {
         map.removeLayer(geoAllResult);

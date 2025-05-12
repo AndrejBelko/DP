@@ -1,5 +1,4 @@
 import sys
-
 import gpxpy
 import csv
 import xml.etree.ElementTree as ET
@@ -7,7 +6,6 @@ import xml.etree.ElementTree as ET
 gpx_file_path = sys.argv[1]
 csv_file_path = sys.argv[2]
 
-# Parse XML from file manually
 with open(gpx_file_path, 'rb') as raw_gpx:
     tree = ET.parse(raw_gpx)
 
@@ -21,7 +19,6 @@ namespaces = {
 
 trkpts = root.findall(".//default:trkpt", namespaces)
 
-# Parse with gpxpy
 with open(gpx_file_path, 'r', encoding='utf-8') as gpx_file:
     gpx = gpxpy.parse(gpx_file)
 

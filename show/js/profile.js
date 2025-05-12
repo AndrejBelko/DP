@@ -1,3 +1,7 @@
+/**
+ * Initializes the DataTable with custom settings.
+ * Disables ordering for specific columns and sets default sort order.
+ */
 let table = new DataTable('#myTable', {
     paging: true,
     columnDefs: [
@@ -8,6 +12,11 @@ let table = new DataTable('#myTable', {
     autoWidth: false
 });
 
+/**
+ * Toggles all checkboxes with the class 'checkbox'.
+ * If all are checked, unchecks them; otherwise, checks them all.
+ * Also updates the button text accordingly.
+ */
 function checkAllCheckboxes() {
     var checkboxes = document.querySelectorAll('.checkbox');
     var checkAllBtn = document.getElementById('checkAllBtn');
@@ -26,11 +35,20 @@ function checkAllCheckboxes() {
     checkAllBtn.textContent = allChecked ? 'Check All' : 'Uncheck All';
 }
 
+/**
+ * Displays a Bootstrap toast message when the element with ID 'token' is clicked.
+ */
 document.getElementById("token").addEventListener('click', function () {
     const errorToast = new bootstrap.Toast(document.getElementById('tokenToast'));
     errorToast.show();
 });
 
+/**
+ * Loads GPS data from the server via AJAX using the provided filename.
+ * On success, the data is passed to processData().
+ *
+ * @param {string} filename - The name of the file to load.
+ */
 function loadGPSData(filename) {
 
     fetch("load_data.php?file=" + encodeURIComponent(filename))
@@ -44,26 +62,48 @@ function loadGPSData(filename) {
         .catch(error => console.error('Error:', error));
 }
 
+/**
+ * Parses speed data from the raw input.
+ *
+ * @param {Array} data - Array of data lines, each a sub-array.
+ * @returns {Array} Parsed array of objects with time and speed fields.
+ */
 function parseSpeed(data) {
-
     return data.map(line => {
         return {"time": parseInt(line[2]) * 1000, "speed": parseFloat(line[3])};
     });
 }
 
+/**
+ * Parses altitude (height) data from the raw input.
+ *
+ * @param {Array} data - Array of data lines, each a sub-array.
+ * @returns {Array} Parsed array of objects with time and height fields.
+ */
 function parseHeight(data) {
-
     return data.map(line => {
         return {"time": parseInt(line[2]) * 1000, "height": parseFloat(line[4])};
     });
 }
 
+/**
+ * Parses heart rate data from the raw input.
+ *
+ * @param {Array} data - Array of data lines, each a sub-array.
+ * @returns {Array} Parsed array of objects with time and heart rate fields.
+ */
 function parseHeartRate(data) {
     return data.map(line => {
         return {"time": parseInt(line[2]) * 1000, "hr": parseFloat(line[5])};
     });
 }
 
+/**
+ * Processes the JSON data from the server, separates and filters the metrics,
+ * and triggers rendering of charts for speed, height, and heart rate.
+ *
+ * @param {Array} jsonData - Parsed JSON array of GPS-related data.
+ */
 function processData(jsonData) {
     const speedData = parseSpeed(jsonData).filter(d => !isNaN(d.speed));
     const heightData = parseHeight(jsonData).filter(d => !isNaN(d.height));
@@ -88,6 +128,16 @@ function processData(jsonData) {
     }
 }
 
+/**
+ * Draws a time-series chart using amCharts library.
+ *
+ * @param {string} idelement - The ID of the DOM element to render the chart in.
+ * @param {Array} data - Array of data points with time and a metric (e.g. speed, height).
+ * @param {string} name - Title of the chart and metric.
+ * @param {string} field - The data field to use for the Y-axis.
+ * @param {string} prefix - Prefix string for tooltips.
+ * @param {string} suffix - Suffix string for tooltips and Y-axis label.
+ */
 function drawChart(idelement, data, name, field, prefix, suffix) {
     // Create chart instance
     const chart = am4core.create(idelement, am4charts.XYChart);

@@ -72,7 +72,14 @@ if (isset($_GET['track_ids'])) {
     echo "No route specified for deletion.";
 }
 
-
+/**
+ * Creates a CSV export of the `path` table for a specific user.
+ *
+ * @param string $filePath Full path to the output CSV file.
+ * @param PDO $db PDO database connection object.
+ * @param int $user_id ID of the user whose data is being exported.
+ * @throws DateMalformedStringException
+ */
 function createCSV($filePath, $db, $user_id)
 {
     $sql = "SELECT * FROM path where user_id = :user_id"; // Replace 'tracks' with your table name
@@ -111,6 +118,11 @@ function createCSV($filePath, $db, $user_id)
     }
 }
 
+/**
+ * Deletes a file if it exists.
+ *
+ * @param string $filePath Path to the file to be deleted.
+ */
 function deleteCSV($filePath)
 {
     if (file_exists($filePath)) {

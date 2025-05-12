@@ -32,9 +32,6 @@ if($_POST['dataset'] == null){
 }
 
 $input = "$path $min $max $gap $matches $dbName $type $user_id 2>&1";
-//echo "python3 /home/data/search/geohash.py $input";
-
-//$output = shell_exec("C:\Users\maros\.virtualenvs\zobrazenie-SYSuuEtd\Scripts\python.exe .\geohash.py $input");
 
 $output = shell_exec("python3 /home/data/search/geohash.py " . $input);
 echo $output;

@@ -1,15 +1,24 @@
-import sys, os, csv, requests, json
+import sys, csv, requests, json
 from os import path
-from os.path import exists
 import gpxpy
-import base64
 import subprocess
 import re
 import os
 import config
 
 ## Save map matched data to a csv file
-def create_file_for_db(data,track,user,type,name):
+def create_file_for_db(data, track, user):
+    """
+    Creates a CSV file from map-matched GPS data for a given user and track name.
+
+    Parameters:
+        data (list): List of [longitude, latitude] pairs.
+        track (str): Name or identifier for the track.
+        user (str): Username or user identifier.
+
+    Returns:
+        str: Full path to the created CSV file.
+    """
     base_folder = f"/home/data/import/files/mapmatched/{user}"
 
     if not os.path.isdir(base_folder):
@@ -25,6 +34,15 @@ def create_file_for_db(data,track,user,type,name):
 
 ## Decode polyline
 def decode_polyline(polyline):
+    """
+    Decodes a polyline string (Google Encoded Polyline Algorithm) into a list of coordinates.
+
+    Parameters:
+        polyline (str): Encoded polyline string.
+
+    Returns:
+        list: List of [longitude, latitude] pairs.
+    """
     points = []
     index = lat = lng = 0
 
@@ -54,7 +72,19 @@ def decode_polyline(polyline):
     return points
 
 ## Map match the points
-def map_match(points,container_name,parameters,costing):
+def map_match(points, container_name, parameters, costing):
+    """
+    Sends a request to Valhalla's map-matching API with given GPS points.
+
+    Parameters:
+        points (list): List of [longitude, latitude] pairs to map-match.
+        container_name (str): Docker container name running Valhalla.
+        parameters (dict): Additional map-matching parameters (e.g., search radius, accuracy).
+        costing (str): Travel mode for map matching ("auto", "pedestrian", etc.).
+
+    Returns:
+        tuple: ("SUCESS;", encoded geometry string) if successful, or ("Error;", {}) on failure.
+    """
     strr = ""
     for pt in points:
         strr += '{"lat":'+str(pt[1])+',"lon":'+str(pt[0])+'},'
@@ -78,6 +108,20 @@ def map_match(points,container_name,parameters,costing):
 
 ## Iterative map match that skips unmatchable parts
 def split_and_map_match(points, container_name, parameters, costing, chunk_size=50, min_successful=3):
+    """
+    Splits GPS points into chunks and performs map matching for each chunk individually.
+
+    Parameters:
+        points (list): List of [longitude, latitude] pairs.
+        container_name (str): Docker container name running Valhalla.
+        parameters (dict): Map-matching configuration parameters.
+        costing (str): Travel mode.
+        chunk_size (int): Maximum number of points per chunk.
+        min_successful (int): Minimum number of matched points to accept result.
+
+    Returns:
+        list or None: List of matched [lon, lat] points, or None if too few matches.
+    """
     all_matched_points = []
     i = 0
     while i < len(points):
@@ -93,10 +137,28 @@ def split_and_map_match(points, container_name, parameters, costing, chunk_size=
 
 ## Remove any letters from lat/lon
 def clean_value(value):
+    """
+    Cleans a coordinate string value by removing non-numeric characters.
+
+    Parameters:
+        value (str): Input coordinate string.
+
+    Returns:
+        str: Cleaned numeric string.
+    """
     return re.sub(r'[^0-9.-]', '', value)
 
 ## Get points from csv file
 def load_points(filename):
+    """
+    Extracts coordinates from a CSV file by detecting latitude and longitude columns.
+
+    Parameters:
+        filename (str): Path to the CSV file.
+
+    Returns:
+        list or None: List of [longitude, latitude] pairs or None if columns not found.
+    """
     with open(filename, 'r', newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         header = next(spamreader)
@@ -117,6 +179,15 @@ def load_points(filename):
         return coords
 
 def load_points_from_geojson(file):
+    """
+    Extracts coordinates from the first geometry feature in a GeoJSON file.
+
+    Parameters:
+        file (str): Path to the GeoJSON file.
+
+    Returns:
+        list: List of [longitude, latitude] pairs.
+    """
     f = open(file, "r")
     text = f.read()
     data = json.loads(text)
@@ -128,6 +199,15 @@ def load_points_from_geojson(file):
     return  coordinates
 
 def load_gpx_points(file):
+    """
+    Parses GPX file and extracts all track point coordinates.
+
+    Parameters:
+        file (str): Path to the GPX file.
+
+    Returns:
+        list: List of [longitude, latitude] pairs.
+    """
     points = []
     with open(file, 'r') as gpx_file:
         gpx = gpxpy.parse(gpx_file)
@@ -138,6 +218,15 @@ def load_gpx_points(file):
     return points
 
 def folder_process(params):
+    """
+    Processes input track file (CSV, GeoJSON, or GPX), performs map matching, and stores the result.
+
+    Parameters:
+        params (dict): Input parameters including file path, container name, user info, and matching settings.
+
+    Returns:
+        str: Path to the saved map-matched CSV file or "None" if matching failed.
+    """
     container_name = params["container"]
     user = params["username"]
     file_input = params["file"].replace(r'\/', '/')
@@ -151,6 +240,7 @@ def folder_process(params):
     name = file_input[:str(file_input).find(".")]
     name = os.path.basename(name)
 
+    points = None
     if format.lower() == ".csv":
         points = load_points(file_input)
     elif format.lower() == ".geojson":
@@ -160,10 +250,9 @@ def folder_process(params):
     else:
         failed[name] = f"Points couldn't be extracted."
 
-    if points == None:
+    if points is None:
         failed[name] = f"Points couldn't be extracted."
 
-    geometry = None
     subdir = parameters['type']
     if subdir == "Walk":
         matched_pts = split_and_map_match(points, container_name, parameters, costing="pedestrian")
@@ -174,7 +263,7 @@ def folder_process(params):
 
     path = "None"
     if matched_pts:
-        path = create_file_for_db(matched_pts, name, user, subdir, "map-match.csv")
+        path = create_file_for_db(matched_pts, name, user)
         successful.append(name)
     else:
         failed[name] = "No valid segments found for map matching."
@@ -187,6 +276,16 @@ def folder_process(params):
     return path
 
 def check_valhalla_connection(container_name, port=config.VALHALLA_PORT):
+    """
+    Checks whether the Valhalla container is reachable and responsive.
+
+    Parameters:
+        container_name (str): Docker container name.
+        port (int): Port on which Valhalla is running.
+
+    Returns:
+        bool: True if connection is successful, False otherwise.
+    """
     url = f"http://{container_name}:{port}/status"
     try:
         response = requests.get(url, timeout=5)

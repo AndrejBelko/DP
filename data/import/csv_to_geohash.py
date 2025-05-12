@@ -12,6 +12,12 @@ import numpy as np
 import os
 
 def haversine_vectorized(latitudes, longitudes):
+    """
+    Function to calculate the distance between two points.
+    :param latitudes: latitudes
+    :param longitudes: longitudes
+    :return res: distance between two points
+    """
     R = 6371000  # Earth radius in meters
     lat1 = np.radians(latitudes[:-1])
     lat2 = np.radians(latitudes[1:])
@@ -23,10 +29,16 @@ def haversine_vectorized(latitudes, longitudes):
 
     a = np.sin(d_phi / 2.0)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(d_lambda / 2.0)**2
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
-    return np.sum(R * c)
+    res = np.sum(R * c)
+    return res
 
 
 def insertUser(dbname):
+    """
+    Function to insert user into the database.
+    :param dbname: name of the database
+    :return user_id: id of the user
+    """
     mydb = mysql.connector.connect(
             host="localhost",
             user="search",
@@ -62,6 +74,11 @@ def insertUser(dbname):
 
 
 def getTrackId(user_id):
+    """
+    Function to get track id from user id.
+    :param user_id: id of the user
+    :return track_id: id of the track
+    """
     mydb = mysql.connector.connect(
                 host="localhost",
                 user="search",
@@ -86,6 +103,14 @@ def getTrackId(user_id):
 
 
 def csvToGeohash(csvPath, dbName, title, directory_path):
+    """
+    Function to convert csv file to geohash.
+    :param csvPath: path to csv file
+    :param dbName: name of the database
+    :param title: title of the dataset
+    :param directory_path: directory path, where to save created file
+    :return dx1, dx2: created trajectories dataframes
+    """
     user_id = insertUser(dbName)
     df_orig = pd.read_csv(csvPath)
     df_orig = df_orig.fillna('')
@@ -192,6 +217,14 @@ def csvToGeohash(csvPath, dbName, title, directory_path):
     return dx1, dx2
 
 def importData(dx1, dx2, dbName, directory_path):
+    """
+    Function to import data into database.
+    :param dx1: geohash dataframe
+    :param dx2: track dataframe
+    :param dbName: name of database
+    :param directory_path: directory path, where file is located
+    :return: nothing
+    """
     print("creating database...")
     mydb = mysql.connector.connect(
         host="localhost",

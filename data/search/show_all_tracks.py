@@ -4,6 +4,12 @@ import json
 import sys
 
 def runQuery(type, user_id):
+    """
+    Function to return all tracks from database.
+    :param type: whether trajectory is map-matched or not
+    :param user_id: id of user
+    :return routes: dataframe of all routes
+    """
     mydb = mysql.connector.connect(
         host="localhost",
         user="search",
